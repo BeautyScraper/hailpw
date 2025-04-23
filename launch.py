@@ -1,0 +1,107 @@
+import shutil
+from playwright.sync_api import Playwright, sync_playwright, expect
+from pathlib import Path
+from scrapy.http import HtmlResponse
+from time import sleep
+import re
+import json
+from user_id import userids as userids
+
+userid = r'sstico0'
+
+def mainparse(urlt : str, browser,fp,prompt):
+    # context = browser.new_context()
+    context = browser
+    page = context.new_page()
+    # page.on("request", lambda request: streamtapecall(request,filename))
+    # page.on("response", lambda response: streamtapecall(response,filename))
+    page.goto(urlt)
+    # # with open("cookies.json", "w") as f:
+    # #     f.write(json.dumps(context.cookies()))
+    # breakpoint()
+    sleep(3)
+    # page.locator(".transition-all > svg").first.click()
+    # sleep(3)
+    # breakpoint()
+    file_input = page.locator('input[type="file"][name="file"]')
+    sleep(5)
+    file_input.set_input_files(fp)
+        # page.locator(".transition-all > svg").first.click()
+    print('Hello')
+    # file_chooser = file_chooser_info.value
+        # page.get_by_role("button", name="Upload").click()
+    # file_chooser.set_files(fp)
+    sleep(15)
+    page.get_by_placeholder("Type your idea, click 'Create' to get a video").fill(prompt)
+    # breakpoint()
+    # sleep(10)
+    page.get_by_role("button", name="Create", exact=True).click()
+    sleep(1)
+    # filename = url.strip('/').split('/')[-1]
+
+    # breakpoint()
+
+    # filename = resp.css(".video-title::text").get()[:230] + '.mp4'
+    # upat = '.+response-content-disposition.+' 
+    # # upat = '.+mp4.+' 
+    # page.locator("#player").get_by_role("button").last.click()
+    # sleep(1)
+    # with page.expect_request(lambda request: re.match(upat,request.url)) as first:
+    #     page.locator("#player").get_by_role("button").first.click()
+    #     # breakpoint()   
+    # request = first.value
+    # ariaDownload(request.url,ddir_path,filename)
+    # list(map(lambda x:x.close(), context.pages[1:]))
+    # print(first.value)    
+    # sleep(60)
+    # page.get_by_label("Play").click()
+    # download(r'C:\Heaven\Haven\brothel\Sherawali', filename, url_t)
+
+# https://lexica.art/prompt/ca7f2856-8f79-4aa8-85c0-45d3e1ef8939
+# https://image.lexica.art/full_jpg/0509ff23-a646-4345-97b9-6a781fa6ed37
+
+    # context.close()
+
+
+def run(playwright: Playwright) -> None:
+    browser = playwright.chromium.launch(headless=False)
+    user_data_dir = Path(rf'C:\dumpinggrounds\browserprofile\{userid}')
+    
+    # user_data_dir.mkdir(exist_ok=True,parents=True)
+    # shutil.rmtree(user_data_dir)
+    # user_data_dir.mkdir(exist_ok=True,parents=True)
+
+    url = "https://hailuoai.video/"
+    # browser = playwright.chromium.launch_persistent_context(user_data_dir,headless=False,proxy=proxy)
+    browser = playwright.chromium.launch_persistent_context(user_data_dir,headless=True,args=["--disable-blink-features=AutomationControlled"])
+    # browser = browser.new_context(storage_state=f"{userid}.json")
+    # create an array which contains all the file of a given deirectory using pathlib
+    file_list = [f for f in Path(r"C:\Personal\Games\Fapelo\hailuoai").rglob("*.jpg")]
+    # breakpoint()
+    # file_list = os.listdir(r"C:\Personal\Games\Fapelo\hailuoai\Women Dancing Seductively")
+    # loop through the array in batches of three
+    for i in range(0, len(file_list), 3):
+        batch = file_list[i:i+3]
+        for fp in batch:
+            mainparse(url, browser,str(fp),fp.parent.name)
+            fp.unlink()
+            # break
+        break
+    browser.close()
+
+with sync_playwright() as playwright:
+    print("Select a userid:")
+    for i, uid in enumerate(userids, start=1):
+        print(f"{i}: {uid}")
+        
+    try:
+        choice = int(input("Enter the number corresponding to the userid: "))
+        if 1 <= choice <= len(userids):
+            userid = userids[choice - 1]
+        else:
+            print("Invalid choice. Exiting.")
+            exit()
+    except ValueError:
+        print("Invalid input. Exiting.")
+        exit()
+    run(playwright)
