@@ -5,7 +5,9 @@ from scrapy.http import HtmlResponse
 from time import sleep
 import re
 import json
-from user_id import userids as userids
+from user_id import userids , img_dir
+from os import listdir
+from os.path import isdir, join
 
 userid = r'sstico0'
 
@@ -26,7 +28,7 @@ def mainparse(urlt : str, browser,fp,prompt):
     file_input = page.locator('input[type="file"][name="file"]')
     sleep(5)
     file_input.set_input_files(fp)
-        # page.locator(".transition-all > svg").first.click()
+        # page.locator(".transition-all > svg").first.click()wwwwwwwwwwwwwwww
     print('Hello')
     # file_chooser = file_chooser_info.value
         # page.get_by_role("button", name="Upload").click()
@@ -65,7 +67,7 @@ def mainparse(urlt : str, browser,fp,prompt):
 
 def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
-    user_data_dir = Path(rf'C:\dumpinggrounds\browserprofile\{userid}')
+    user_data_dir = Path(rf'{profile_dir}\{userid}')
     
     # user_data_dir.mkdir(exist_ok=True,parents=True)
     # shutil.rmtree(user_data_dir)
@@ -76,7 +78,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch_persistent_context(user_data_dir,headless=True,args=["--disable-blink-features=AutomationControlled"])
     # browser = browser.new_context(storage_state=f"{userid}.json")
     # create an array which contains all the file of a given deirectory using pathlib
-    file_list = [f for f in Path(r"C:\Personal\Games\Fapelo\hailuoai").rglob("*.jpg")]
+    file_list = [f for f in Path(img_dir).rglob("*.jpg")]
     # breakpoint()
     # file_list = os.listdir(r"C:\Personal\Games\Fapelo\hailuoai\Women Dancing Seductively")
     # loop through the array in batches of three
@@ -90,18 +92,21 @@ def run(playwright: Playwright) -> None:
     browser.close()
 
 with sync_playwright() as playwright:
-    print("Select a userid:")
-    for i, uid in enumerate(userids, start=1):
-        print(f"{i}: {uid}")
-        
-    try:
-        choice = int(input("Enter the number corresponding to the userid: "))
-        if 1 <= choice <= len(userids):
-            userid = userids[choice - 1]
-        else:
-            print("Invalid choice. Exiting.")
-            exit()
-    except ValueError:
-        print("Invalid input. Exiting.")
-        exit()
+    profile_dir = r'C:\dumpinggrounds\browserprofile'
+    # List all directories in profile_dir
+    directories = [d for d in listdir(profile_dir) if isdir(join(profile_dir, d))]
+
+    # Display directories to the user
+    print("Available directories:")
+    for idx, directory in enumerate(directories, start=1):
+        print(f"{idx}. {directory}")
+
+    # Ask the user to select a directory
+    selected_index = int(input("Select a directory by number: ")) - 1
+
+    # Validate the selection
+    if 0 <= selected_index < len(directories):
+        userid = directories[selected_index]
+    else:
+        raise ValueError("Invalid selection. Please run the script again and select a valid number.")
     run(playwright)

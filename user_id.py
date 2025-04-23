@@ -1,5 +1,7 @@
 userids = ['sstico0',
-           'sstico1',
+           'alindiit',
            'diffusionstable877',
            'apple'
              ]
+img_dir = r'C:\dumpinggrounds\hailuoai'
+# img_dir = r'C:\Personal\Games\Fapelo\hailuoai'
