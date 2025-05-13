@@ -7,7 +7,7 @@ import re
 import json
 from user_id import userids as userids
 
-userid = r'summerschool' 
+userid = r'alind' 
 
 def mainparse(urlt : str, browser):
     # context = browser.new_context()
