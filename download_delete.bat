@@ -1,0 +1,11 @@
+C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
+C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
+C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
+C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
+C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
+C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
+C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
+C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
+C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
+C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
+C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py

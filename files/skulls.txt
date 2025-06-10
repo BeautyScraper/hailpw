@@ -1,0 +1,10 @@
+skulls
+flowers
+chains
+bugs
+rocks
+Magma
+Lava
+wood
+glass
+metal
