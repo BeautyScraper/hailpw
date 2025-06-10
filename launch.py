@@ -29,7 +29,7 @@ def mainparse(urlt : str, browser,fp,prompt):
     sleep(5)
     file_input.set_input_files(fp)
         # page.locator(".transition-all > svg").first.click()wwwwwwwwwwwwwwww
-    print('Hello')
+    print(Path(fp).name)
     # file_chooser = file_chooser_info.value
         # page.get_by_role("button", name="Upload").click()
     # file_chooser.set_files(fp)
@@ -78,7 +78,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch_persistent_context(user_data_dir,headless=True,args=["--disable-blink-features=AutomationControlled"])
     # browser = browser.new_context(storage_state=f"{userid}.json")
     # create an array which contains all the file of a given deirectory using pathlib
-    file_list = [f for f in Path(img_dir).rglob("*.jpg")]
+    file_list = [f for f in Path(img_dir).rglob("*.jpg")] + [f for f in Path(img_dir).rglob("*.jpeg")] + [f for f in Path(img_dir).rglob("*.png")]
     # breakpoint()
     # file_list = os.listdir(r"C:\Personal\Games\Fapelo\hailuoai\Women Dancing Seductively")
     # loop through the array in batches of three

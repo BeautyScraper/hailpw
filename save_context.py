@@ -7,7 +7,7 @@ import re
 import json
 from user_id import userids as userids
 
-userid = r'summerschool' 
+userid = r'summer' 
 
 def mainparse(urlt : str, browser):
     # context = browser.new_context()
@@ -15,13 +15,13 @@ def mainparse(urlt : str, browser):
     page = context.new_page()
     # page.on("request", lambda request: streamtapecall(request,filename))
     # page.on("response", lambda response: streamtapecall(response,filename))
-    page.goto(urlt)
+    page.goto(urlt,timeout=0)
     # # with open("cookies.json", "w") as f:
     # #     f.write(json.dumps(context.cookies()))
 
     breakpoint()
-    storage = context.storage_state(path=f"{userid}.json")
-    sleep(5)
+    # storage = context.storage_state(path=f"{userid}.json")
+    sleep(500)
     # filename = url.strip('/').split('/')[-1]
 
     # breakpoint()
@@ -50,15 +50,14 @@ def mainparse(urlt : str, browser):
 
 def run(playwright: Playwright) -> None:
     
-    browser = playwright.chromium.launch(headless=False)
-    user_data_dir = Path(rf'C:\dumpinggrounds\browserprofile\{userid}')
-    user_data_dir.mkdir(exist_ok=True,parents=True)
-    shutil.rmtree(user_data_dir)
-    user_data_dir.mkdir(exist_ok=True,parents=True)
+    user_data_dir = Path(rf'C:\dumpinggrounds\browserprofileff\{userid}')
+    # user_data_dir.mkdir(exist_ok=True,parents=True)
+    # shutil.rmtree(user_data_dir)
+    # user_data_dir.mkdir(exist_ok=True,parents=True)
 
-    url = "https://hailuoai.video/"
+    url = "https://hailuoai.video"
     # browser = playwright.chromium.launch_persistent_context(user_data_dir,headless=False,proxy=proxy)
-    browser = playwright.chromium.launch_persistent_context(user_data_dir,headless=False,args=["--disable-blink-features=AutomationControlled"])
+    browser = playwright.firefox.launch_persistent_context(user_data_dir,headless=False)
     # browser = browser.new_context(storage_state=f"{userid}.json")
     mainparse(url, browser)
     browser.close()
