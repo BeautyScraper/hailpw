@@ -20,10 +20,29 @@ def get_new_prompt():
     
     return prompt
 
+def download_cleansing(page):
+    # breakpoint()
+    page.locator("button.px-2\.5:nth-child(2)").click()
+    image_grid = page.locator("div.grid-video-card").all()
+    for im in image_grid:
+        elem = im.locator("div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)")
+        try:
+            if "absolute right-[10px]" in elem.get_attribute("class"):
+                elem.click()
+                page.locator("button.ant-btn:nth-child(2)").first.click()
+            else:
+                print("No more images to delete")
+                break
+        except Exception as e:
+            print(f"Error during deletion: {e}")
+            # If an error occurs, we can try to delete the next image
+            break
+    page.locator("button.px-2\.5:nth-child(1)").click()
+
 def download_and_delete_image(page,index=1):
-    breakpoint()
+    # breakpoint()
+    page.locator("button.px-2\.5:nth-child(1)").click()
     download_path = os.path.abspath("downloads")
-    
     with page.expect_download() as download_info:
         page.locator(f"div.group\/video-card:nth-child({index}) > section:nth-child(2) > div:nth-child(3) > div:nth-child(1) > button:nth-child(2)").first.click()
         # page.locator(".ant-dropdown-placement-topRight > ul:nth-child(1) > li:nth-child(1)").first.click()
@@ -38,11 +57,13 @@ def download_and_delete_image(page,index=1):
     download.save_as(os.path.join(download_path, rand_filename))
     print(f"Saved to: {os.path.join(download_path, download.suggested_filename)}")
     # breakpoint()
+    sleep(20)
     page.locator(f"div.group\/video-card:nth-child(1) > section:nth-child(2) > div:nth-child(3) > div:nth-child(1) > button:nth-child(3)").first.click()
-    try:
-        page.locator(f"button.ant-btn:nth-child(2)").first.click()
-    except Exception as e:  
-        download_and_delete_image(page, index=index+1)
+    page.locator(f"button.ant-btn:nth-child(2)").first.click()
+    # try:
+    # except Exception as e:  
+    #     # download_cleansing(page)
+    #     download_and_delete_image(page, index=index+1)
         
 
 
@@ -78,7 +99,12 @@ def create_and_wait(page):
         # breakpoint()
         # break
         print("starting download")
-        download_and_delete_image(page)
+        try:
+            download_and_delete_image(page)
+        except Exception as e:
+            print(f"Error during download: {e}")
+            download_cleansing(page)
+            continue
 
 
 def run(playwright: Playwright) -> None:
@@ -96,6 +122,7 @@ def run(playwright: Playwright) -> None:
         user_data_dir = Path(rf'{profile_dir}\{userid}')
         browser = playwright.firefox.launch_persistent_context(user_data_dir,headless=True,downloads_path=download_path)
         page = browser.new_page()
+        page.set_default_timeout(60000)
         
         # breakpoint()
         page.goto("https://hailuoai.video/create?_rsc=11c8k")
@@ -109,6 +136,7 @@ def run(playwright: Playwright) -> None:
         try:
             create_and_wait(page)
         except Exception as e:
+            page.screenshot(path=f"ss\\{userid}_error.png")
             print(f"Error during creation: {e}")
             # Optionally, you can log the error or take a screenshot
             page.screenshot(path=f"{userid}_error.png")

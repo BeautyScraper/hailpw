@@ -13,7 +13,7 @@ import os
 from os.path import isdir, join
 from aria2cgeneric import generic_downloader
 
-prompt1 = "full body photo of  blue skinned Bengali voluptuous goddess with multiple hands with big cleavage wearing bikini and stocking, wearing garland  made of skull"
+prompt1 = "full body photo of blue skinned Bengali proportionately voluptuous goddess with multiple hands with big cleavage wearing bikini and stocking, wearing garland  made of skull"
 def get_new_prompt():
     # This function should return a new prompt for the video creation
     # For now, we will return a static prompt
@@ -80,6 +80,30 @@ def create_and_wait(page):
         # break
         print("starting download")
         download_and_delete_image(page)
+def create_wait(page):
+    for i in range(1,10):
+        # prompt = get_new_prompt()
+        # page.locator("#video-create-textarea").click()
+        # page.locator("#video-create-textarea").fill(prompt)
+        # page.get_by_role("button", name="4").click()
+        # sleep(100)
+        # breakpoint()
+        try:
+            download_and_delete_image(page)
+        except:
+            download_and_delete_image(page,index=2)
+def delete_images(page):
+    download_path = os.path.abspath("downloads_dreams")
+    os.makedirs(download_path, exist_ok=True)
+    sleep(10)
+    page.locator("img[src*='medium']").last.click()
+    breakpoint()
+    src_list = page.locator("img[src*='public']").evaluate_all("elements => elements.map(el => el.src)")
+    for iurl in src_list:
+        generic_downloader(iurl, iurl.split('/')[-2]+'.jpg',iurl,1,download_path)
+    page.locator("#radix-«r8b»").last.click()
+    page.locator("body > div:nth-child(21)").last.click()
+    page.locator("button.hover\:bg-white\/30:nth-child(2)").last.click()
 
 
 def run(playwright: Playwright) -> None:
@@ -95,7 +119,7 @@ def run(playwright: Playwright) -> None:
         userid = user.name
         print(f"Using user ID: {userid}")
         user_data_dir = Path(rf'{profile_dir}\{userid}')
-        browser = playwright.firefox.launch_persistent_context(user_data_dir,headless=False,downloads_path=download_path)
+        browser = playwright.firefox.launch_persistent_context(user_data_dir,headless=True,downloads_path=download_path)
         page = browser.new_page()
         
         page.goto("https://dream-machine.lumalabs.ai/ideas")
@@ -109,12 +133,12 @@ def run(playwright: Playwright) -> None:
             page.locator("button.relative").click()
             break
         sleep(10)
-        for iurl in full_size:
-            src_list = page.locator("img[src*='medium']").evaluate_all("elements => elements.map(el => el.src)")
-            full_size = [x.replace("medium", "public") for x in src_list]
-            print(f"Downloading image from {iurl}")
-            generic_downloader(iurl, iurl.split('/')[-2]+'.jpg','',1,download_path)
-            # breakpoint()
+        delete_images(page)
+        # src_list = page.locator("img[src*='medium']").evaluate_all("elements => elements.map(el => el.src)")
+        # full_size = [x.replace("medium", "public") for x in src_list]
+        # for iurl in full_size:
+        #     # breakpoint()
+        #     generic_downloader(iurl, iurl.split('/')[-2]+'.jpg',iurl,1,download_path)
 
         page.wait_for_timeout(10000)
         

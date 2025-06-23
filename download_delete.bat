@@ -8,4 +8,4 @@ C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\
 C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
 C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
 C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
-C:\Users\sstic\miniconda\envs\allinone\python.exe c:\Personal\Developed\Hailuio\download_delete.py
+C:\Users\sstic\miniconda\envs\allinone\python.exe "C:\Personal\Developed\Hailuio\image_gen.py"
