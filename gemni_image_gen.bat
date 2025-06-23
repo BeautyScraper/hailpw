@@ -1,0 +1,7 @@
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
