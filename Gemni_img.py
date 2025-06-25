@@ -1,5 +1,6 @@
 from random import choice, shuffle
 import shutil
+import pandas as pd
 from playwright.sync_api import Playwright, sync_playwright, expect
 from pathlib import Path
 from scrapy.http import HtmlResponse
@@ -11,6 +12,7 @@ from notSoRand import randomLine
 from os import listdir
 import os
 from os.path import isdir, join
+
 
 
 def get_new_prompt():
@@ -52,6 +54,22 @@ def reduce_filename(filename, max_length=200):
         reduced_filename = reduced_filename[:index_to_drop] + reduced_filename[index_to_drop + 1:]
     return reduced_filename
 
+def save_prompt_frequency(prompt, filename="prompt_frequency.csv"):
+    """
+    Saves the prompt frequency to a CSV file.
+    If the file does not exist, it creates a new one.
+    If it exists, it updates the frequency of the prompt.
+    """
+    df = pd.DataFrame(columns=['prompt', 'frequency'])
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+    
+    if prompt in df['prompt'].values:
+        df.loc[df['prompt'] == prompt, 'frequency'] += 1
+    else:
+        df = df.append({'prompt': prompt, 'frequency': 1}, ignore_index=True)
+    
+    df.to_csv(filename, index=False)
 
 def download_image(page,i,filename=""):
     download_path = os.path.abspath("gemni_downloads")
@@ -118,6 +136,7 @@ def run(playwright: Playwright) -> None:
     os.makedirs(download_path, exist_ok=True)
     dirs = [x for x in Path(profile_dir).iterdir() if x.is_dir()]
     shuffle(dirs)
+    
     for user in dirs:
         if not user.is_dir():
             continue
@@ -135,8 +154,8 @@ def run(playwright: Playwright) -> None:
         negative_replies_max_count = 5
         for i in range(100):
             # breakpoint()
-            # if "colab" in userid:
-            #     # breakpoint()
+            # if "sense" in userid:
+            #     breakpoint()
             #     pass
             # else:
             #     print(f"Skipping user {userid} as it is not an image generation user")
@@ -153,15 +172,17 @@ def run(playwright: Playwright) -> None:
                 sleep(1)
                 page.locator(".send-button").click()
                 # breakpoint()
-                negative_replies = ["still learning how to generate certain kinds of images, so I might not be able","unable to generate an image",  "sexually explicit", "against my guidelines"]
+                negative_replies = ["pictures for you online","cannot fulfill","still learning how to generate certain kinds of images, so I might not be able","unable to generate an image",  "sexually explicit", "against my guidelines"]
                 user_changing_replies = ["generate more images for you today", "create more images for you today","I am sorry, but I am unable to generate images for you today", "I am unable to generate images for you today", "I am unable to create images for you today", "I am unable to create images for you today"]
                 sleep(5)
                 reply = page.locator("[id*=model-response-message-contentr_]").last.text_content()
                 retry_count = 50
-                while reply == "" and retry_count > 0:
+                total_img_replys = len(page.locator(".image-button").all())
+                while reply.strip() == "" and retry_count > 0:
+                    new_reply_count = len(page.locator(".image-button").all())
                     sleep(2)
-                    print("",end='.')
-                    reply = page.locator("[id*=model-response-message-contentr_]").last.text_content()
+                    print(f"{total_img_replys} {new_reply_count}",end='.')
+                    reply = page.locator("[id*=model-response-message-contentr_]").last.text_content(timeout=5000)
                     retry_count -= 1
                 sleep(9)
                 print(f"Reply: {reply}")
@@ -174,14 +195,16 @@ def run(playwright: Playwright) -> None:
                     if nr in reply:
                         image_gen_flag = False
                         print(f"Negative reply detected: {nr}, retrying with a different prompt")
+                if image_gen_flag:
+                    negative_replies_max_count += 1
+                    save_prompt_frequency(prompt, "pos_prompt_frequency.csv")
+                    download_image(page,i,prompt[:])
+                else:
+                    save_prompt_frequency(prompt)
+                    negative_replies_max_count -= 1
                     if negative_replies_max_count < 0:
                         print("Negative replies max count reached, retrying with a different user")
                         raise Exception("Negative replies max count reached, retrying with a different user")
-                if image_gen_flag:
-                    negative_replies_max_count += 1
-                    download_image(page,i,prompt[:])
-                else:
-                    negative_replies_max_count -= 1
                     print("Image generation failed, retrying with a different prompt")
                     continue
                 # sleep(60)

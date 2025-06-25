@@ -120,7 +120,7 @@ def run(playwright: Playwright) -> None:
         userid = user.name
         print(f"Using user ID: {userid}")
         user_data_dir = Path(rf'{profile_dir}\{userid}')
-        browser = playwright.firefox.launch_persistent_context(user_data_dir,headless=True,downloads_path=download_path)
+        browser = playwright.firefox.launch_persistent_context(user_data_dir,headless=False,downloads_path=download_path)
         page = browser.new_page()
         page.set_default_timeout(60000)
         
