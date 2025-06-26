@@ -13,7 +13,14 @@ from os import listdir
 import os
 from os.path import isdir, join
 
-
+class Colors:
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    RESET = '\033[0m'
 
 def get_new_prompt():
     # This function should return a new prompt for the video creation
@@ -73,7 +80,7 @@ def save_prompt_frequency(prompt, filename="prompt_frequency.csv"):
 
 def download_image(page,i,filename=""):
     download_path = os.path.abspath("gemni_downloads")
-    print(f"Downloading image {i+1}")
+    print(Colors.GREEN + f"Downloading image {i+1}"  )
     # sleep(2)
     # page.locator(".image-button").nth(i).scroll_into_view_if_needed()
     # sleep(2)
@@ -98,7 +105,7 @@ def download_image(page,i,filename=""):
     downloaded_file_path = download.path()
     print(f"Downloaded to temp: {downloaded_file_path}")
     download.save_as(os.path.join(download_path, rand_filename))
-    print(f"Saved to: {os.path.join(download_path, download.suggested_filename)}")
+    print(f"Saved to: {os.path.join(download_path, download.suggested_filename)}"+ Colors.RESET)
     # sleep(10)
     page.locator(".arrow-back-button").first.click()
         
@@ -178,8 +185,8 @@ def run(playwright: Playwright) -> None:
             #     break
             try:
                 prompt = get_new_prompt()
-                print(f"Creating image with prompt: {prompt}")
-                print(f"Iteration {i+1}, User ID: {userid}, Negative Replies Max Count: {negative_replies_max_count}")
+                print(Colors.BLUE + f"Creating image with prompt: {prompt}" + Colors.RESET)
+                print(Colors.YELLOW + f"Iteration {i+1}, User ID: {userid}, Negative Replies Max Count: {negative_replies_max_count}" + Colors.RESET)
                 page.locator(".ql-editor").click()
                 sleep(1)
                 page.locator(".ql-editor").fill(prompt)
@@ -225,7 +232,7 @@ def run(playwright: Playwright) -> None:
                     continue
                     
                 sleep(9)
-                print(f"Reply: {reply}")
+                print(Colors.CYAN + f"Reply: {reply}" + Colors.RESET)
                 # breakpoint()
                 for uc in user_changing_replies:
                     if uc in reply:
@@ -233,7 +240,7 @@ def run(playwright: Playwright) -> None:
                 for nr in negative_replies:
                     if nr in reply:
                         image_gen_flag = False
-                        print(f"Negative reply detected: {nr}, retrying with a different prompt")
+                        print(Colors.RED + f"Negative reply detected: {nr}, retrying with a different prompt" + Colors.RESET)
                         break
                 if image_gen_flag:
                     negative_replies_max_count += 1
