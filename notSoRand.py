@@ -15,7 +15,11 @@ def randomLine(fileName="test.txt"):
                os.system('start "" "files\%s"' % (fileName))
             # print("Selected Lines is " + selectedLine)
             while(re.search("\[(.*?)\]",selectedLine)):
-                replaceMentStr = randomLine(re.search("\[(.*?)\]",selectedLine)[1] + ".txt")
+                stringfromfile = re.search("\[(.*?)\]",selectedLine)[1]
+                if not ',' in stringfromfile:
+                    replaceMentStr = randomLine(stringfromfile + ".txt")
+                else:
+                    replaceMentStr = random.choice(stringfromfile.split(','))
                 selectedLine = re.sub("(\[.*?\])",replaceMentStr,selectedLine,1)
     except FileNotFoundError or IndexError:
         # print("Setting default Line")

@@ -128,6 +128,22 @@ def create_and_wait(page):
         print("starting download")
         # download_and_delete_image(page)
 
+def save_inner_html(page, element, filepath: str):
+    """Saves the innerHTML of the element matching the locator to a file.
+
+    Args:
+        page (Page): The Playwright Page object.
+        locator (str): The selector (CSS/XPath/etc.) for the element.
+        filepath (str): Path to the file where innerHTML will be saved.
+    """
+    try:
+        inner_html = element.inner_html()
+        with open(filepath, "w", encoding="utf-8") as file:
+            file.write(inner_html)
+        print(f"innerHTML saved to {filepath}")
+    except Exception as e:
+        print(f"Failed to save innerHTML: {e}")
+
 
 def run(playwright: Playwright) -> None:
     userid = r'ash' 
@@ -170,31 +186,55 @@ def run(playwright: Playwright) -> None:
                 sleep(1)
                 page.locator(".send-button").scroll_into_view_if_needed()
                 sleep(1)
-                page.locator(".send-button").click()
+                total_text_replys = len(page.locator("[id*=model-response-message-contentr_]").all()) + 1 - 1
+                sleep(1)
+                # save_inner_html(page, page.locator(".send-button"), f"ss\\{userid}_send_button_before.html")
                 # breakpoint()
-                negative_replies = ["pictures for you online","cannot fulfill","still learning how to generate certain kinds of images, so I might not be able","unable to generate an image",  "sexually explicit", "against my guidelines"]
+                if not  "hidden" in page.locator(".send-button").locator('[fonticon="send"]').first.get_attribute("class"):
+                    page.locator(".send-button").click()
+                else:
+                    page.screenshot(path=f"ss\\{userid}_send_button_hidden.png")
+                # save_inner_html(page, page.locator(".send-button", f"ss\\{userid}_send_button_after.html"))
+                
+                # breakpoint()
+                # negative_replies = ["cannot generate an image","sexually suggestive","can't fulfill that request","find one on the web","pictures for you online","cannot fulfill","still learning how to generate certain kinds of images, so I might not be able","unable to generate an image",  "sexually explicit", "against my guidelines"]
+                with open("negative_replies.txt", "r") as f:
+                    negative_replies = [x.strip() for x in f.read().splitlines()]
+                
                 user_changing_replies = ["generate more images for you today", "create more images for you today","I am sorry, but I am unable to generate images for you today", "I am unable to generate images for you today", "I am unable to create images for you today", "I am unable to create images for you today"]
                 sleep(5)
                 reply = page.locator("[id*=model-response-message-contentr_]").last.text_content()
                 retry_count = 50
                 total_img_replys = len(page.locator(".image-button").all())
-                while reply.strip() == "" and retry_count > 0:
-                    new_reply_count = len(page.locator(".image-button").all())
-                    sleep(2)
-                    print(f"{total_img_replys} {new_reply_count}",end='.')
+                #message-content-id-r_b66701772c70dc9f
+                img_new_reply_count = 0
+                txt_new_reply_count = 0
+                image_gen_flag = True
+                # while img_new_reply_count <= total_img_replys and retry_count > 0:
+                while reply.strip() == "" and len(page.locator(".image-button").all()) <= total_img_replys and retry_count > 0:
                     reply = page.locator("[id*=model-response-message-contentr_]").last.text_content(timeout=5000)
+                    sleep(2)
+                    # print(f"{total_img_replys} {new_reply_count}",end='.')
+                    print(f"",end='.')
                     retry_count -= 1
+                if retry_count <= 0:
+                    # breakpoint()
+                    page.screenshot(path=f"ss\\{userid}_retry_error.png")
+                    print("Retry count exceeded, retrying with a different prompt")
+                    raise Exception("Retry count exceeded, retrying with a different prompt")
+                    continue
+                    
                 sleep(9)
                 print(f"Reply: {reply}")
                 # breakpoint()
                 for uc in user_changing_replies:
                     if uc in reply:
                         raise Exception("User changing, retrying with a different user")
-                image_gen_flag = True
                 for nr in negative_replies:
                     if nr in reply:
                         image_gen_flag = False
                         print(f"Negative reply detected: {nr}, retrying with a different prompt")
+                        break
                 if image_gen_flag:
                     negative_replies_max_count += 1
                     save_prompt_frequency(prompt, "pos_prompt_frequency.csv")
