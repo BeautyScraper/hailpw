@@ -14,13 +14,14 @@ def randomLine(fileName="test.txt"):
             if selectedLine == 'Kuch Nahi' or random.randint(1,100) <= -1:
                os.system('start "" "files\%s"' % (fileName))
             # print("Selected Lines is " + selectedLine)
-            while(re.search("\[(.*?)\]",selectedLine)):
-                stringfromfile = re.search("\[(.*?)\]",selectedLine)[1]
-                if not ',' in stringfromfile:
+            while(re.search("\[([^\[]*?)\]",selectedLine)):
+                stringfromfile = re.search("\[([^\[]*?)\]",selectedLine)[1]
+                if not '||' in stringfromfile:
                     replaceMentStr = randomLine(stringfromfile + ".txt")
                 else:
-                    replaceMentStr = random.choice(stringfromfile.split(','))
-                selectedLine = re.sub("(\[.*?\])",replaceMentStr,selectedLine,1)
+                    replaceMentStr = random.choice(stringfromfile.split('||'))
+                    # breakpoint()
+                selectedLine = re.sub("\[([^\[]*?)\]",replaceMentStr,selectedLine,1)
     except FileNotFoundError or IndexError:
         # print("Setting default Line")
         if len(fileName.split(" ")) == 1:
@@ -36,7 +37,8 @@ def main():
     
 if __name__ == '__main__':
     os.system("md files")
-    line = randomLine("Static.txt")
-    with open("result.txt","w") as file:
-        file.write(line)
+    line = randomLine("test.txt")
+    print(line)
+    # with open("result.txt","w") as file:
+    #     file.write(line)
 

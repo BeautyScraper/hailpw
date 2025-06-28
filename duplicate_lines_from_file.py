@@ -28,6 +28,10 @@ def main():
     # file_path = Path(args.file)
     file_path = Path(r'C:\Personal\Developed\Hailuio\files\gemni.txt')  # Replace with your file path
     remove_duplicate_lines(file_path)
+    file_path = Path(r'C:\Personal\Developed\Hailuio\files\brapanty_fantasy.txt')  # Replace with your file path
+    remove_duplicate_lines(file_path)
+    file_path = Path(r'C:\Personal\Developed\Hailuio\files\oldnews.txt')  # Replace with your file path
+    remove_duplicate_lines(file_path)
 
 if __name__ == '__main__':
     main()

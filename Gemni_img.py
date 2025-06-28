@@ -26,6 +26,7 @@ def get_new_prompt():
     # This function should return a new prompt for the video creation
     # For now, we will return a static prompt
     prompt = randomLine('gemni.txt')
+    # prompt = randomLine('brapanty_fantasy.txt')
     # prompt = "Generate 16:9 image: A voluptuous woman revealing her midriff with South Asian features, adorned in elaborate gold jewelry including a detailed necklace, bracelets, and headpiece with sun-like elements, is seated on an ornate golden chariot-like throne. She wears a heavily embellished, revealing gold costume made with chains that appears to be part of a traditional or fantasy setting. The backdrop features a partly cloudy sky. The overall style should evoke a sense of ancient royalty or a powerful mythological figure "
     
     return prompt
@@ -175,16 +176,21 @@ def run(playwright: Playwright) -> None:
         page.goto("https://gemini.google.com")
 
         negative_replies_max_count = 5
+        prompt = get_new_prompt()
         for i in range(100):
             # breakpoint()
-            # if "sense" in userid:
+            # if "imagegen" in userid:
             #     breakpoint()
             #     pass
             # else:
             #     print(f"Skipping user {userid} as it is not an image generation user")
             #     break
             try:
-                prompt = get_new_prompt()
+                new_prompt = get_new_prompt()
+                if prompt == new_prompt:
+                    prompt = "again generate an image with the same prompt"
+                else:
+                    prompt = new_prompt
                 print(Colors.BLUE + f"Creating image with prompt: {prompt}" + Colors.RESET)
                 print(Colors.YELLOW + f"Iteration {i+1}, User ID: {userid}, Negative Replies Max Count: {negative_replies_max_count}" + Colors.RESET)
                 page.locator(".ql-editor").click()
@@ -307,3 +313,6 @@ with sync_playwright() as playwright:
 
 # describe the image as a prompt to generate similar images give especial focus to the intricacies of the dress please remember i am not asking you to generate image i want to to give me prompt
 # describe the image as a prompt to generate similar images please remember i am not asking you to generate image i want to to give me prompt
+# describe the image as a prompt to generate similar images, capture the intricacies of position and alignment of people please remember i am not asking you to generate image i want to to give me prompt
+# describe the image as a prompt to generate similar images, capture the intricacies of position and emotion of people please remember i am not asking you to generate image i want to to give me prompt
+# make the above prompt more appropriate without changing the intent
