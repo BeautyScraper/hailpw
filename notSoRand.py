@@ -3,12 +3,28 @@ import re
 import os
 from pathlib import Path
 
+def preprocess_lines(lines):
+    updated_lines = []
+    for line in lines:
+        if '#' in line:
+            try:
+                get_freq = int(line.split('#')[0])
+            except ValueError:
+                get_freq = 1
+            for c in range(get_freq):
+                updated_lines.append(line.split('#')[1]) 
+        else:
+            updated_lines.append(line)
+    return updated_lines
+
 def randomLine(fileName="test.txt"):
     try:
         # print("opening " + fileName)
         with open("files\\" + fileName,"r") as inF:
             try:
-                selectedLine = random.choice(inF.readlines())
+                allLines = inF.readlines()
+                allLines = preprocess_lines(allLines)
+                selectedLine = random.choice(allLines)
             except:
                 selectedLine = 'Kuch Nahi'
             if selectedLine == 'Kuch Nahi' or random.randint(1,100) <= -1:
@@ -16,6 +32,9 @@ def randomLine(fileName="test.txt"):
             # print("Selected Lines is " + selectedLine)
             while(re.search("\[([^\[]*?)\]",selectedLine)):
                 stringfromfile = re.search("\[([^\[]*?)\]",selectedLine)[1]
+                # if stringfromfile != "@self":
+                #     stringfromfile = selectedLine
+                # stringfromfile = pstringfromfile
                 if not '||' in stringfromfile:
                     replaceMentStr = randomLine(stringfromfile + ".txt")
                 else:
