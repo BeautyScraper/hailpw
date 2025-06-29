@@ -8,7 +8,7 @@ from time import sleep, time
 import re
 import json
 from user_id import userids , img_dir
-from notSoRand import randomLine
+from notSoRand import random_line
 from os import listdir
 import os
 from os.path import isdir, join
@@ -28,7 +28,7 @@ allowed_prompt_success_rate = 0.15  # Now interpreted as a rate between 0 and 1
 def get_new_prompt():
     # This function should return a new prompt for the video creation
     # For now, we will return a static prompt
-    prompt = randomLine('gemni.txt')
+    prompt = random_line('gemini.txt')
     # prompt = randomLine('brapanty_fantasy.txt')
     # prompt = "Generate 16:9 image: A voluptuous woman revealing her midriff with South Asian features, adorned in elaborate gold jewelry including a detailed necklace, bracelets, and headpiece with sun-like elements, is seated on an ornate golden chariot-like throne. She wears a heavily embellished, revealing gold costume made with chains that appears to be part of a traditional or fantasy setting. The backdrop features a partly cloudy sky. The overall style should evoke a sense of ancient royalty or a powerful mythological figure "
     

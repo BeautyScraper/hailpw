@@ -17,7 +17,35 @@ def preprocess_lines(lines):
             updated_lines.append(line)
     return updated_lines
 
-def randomLine(fileName="test.txt"):
+def random_line(npath):
+    newpath = Path('files') /  Path(npath)
+    if newpath.with_name(newpath.stem).is_dir():
+        newpath = newpath.with_name(newpath.stem)
+        files = [f for f in newpath.iterdir() if f.is_file() and f.suffix == '.txt']
+        if files:
+            selected_file = random.choice(files)
+            return return_entire_string_after_replacing_patterns(selected_file)
+    if newpath.is_file():
+       return randomLine_helper(newpath.with_suffix('.txt').name) 
+
+def return_entire_string_after_replacing_patterns(filepath:Path):
+    with open(filepath, "r") as file:
+        content = file.read()
+        # Preprocess the entire content as a single line with newline
+        
+        # Replace patterns like [something] recursively
+        pattern = re.compile(r"\[([^\[]*?)\]")
+        while pattern.search(content):
+            match = pattern.search(content)
+            stringfromfile = match.group(1)
+            if '||' not in stringfromfile:
+                replacement = random_line(stringfromfile + ".txt")
+            else:
+                replacement = random.choice(stringfromfile.split('||'))
+            content = content[:match.start()] + replacement + content[match.end():]
+        return content.rstrip('\n')
+
+def randomLine_helper(fileName="test.txt"):
     try:
         # print("opening " + fileName)
         with open("files\\" + fileName,"r") as inF:
@@ -36,7 +64,7 @@ def randomLine(fileName="test.txt"):
                 #     stringfromfile = selectedLine
                 # stringfromfile = pstringfromfile
                 if not '||' in stringfromfile:
-                    replaceMentStr = randomLine(stringfromfile + ".txt")
+                    replaceMentStr = random_line(stringfromfile + ".txt")
                 else:
                     replaceMentStr = random.choice(stringfromfile.split('||'))
                     # breakpoint()
@@ -52,11 +80,11 @@ def randomLine(fileName="test.txt"):
 def main():
     if not Path('files').is_dir():
         os.system("md files")
-    return randomLine('start.txt')
+    return random_line('start.txt')
     
 if __name__ == '__main__':
     os.system("md files")
-    line = randomLine("test.txt")
+    line = random_line("gemini.txt")
     print(line)
     # with open("result.txt","w") as file:
     #     file.write(line)
