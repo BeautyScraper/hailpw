@@ -21,12 +21,32 @@ def random_line(npath):
     newpath = Path('files') /  Path(npath)
     if newpath.with_name(newpath.stem).is_dir():
         newpath = newpath.with_name(newpath.stem)
-        files = [f for f in newpath.iterdir() if f.is_file() and f.suffix == '.txt']
+        files = []
+        for f in newpath.iterdir():
+            if f.is_file() and f.suffix == '.txt':
+                try:
+                    if re.search('\((\d+)\)',f.name):
+                        freq = int(re.search('\((\d+)\)',f.name).group(1))
+                    else:
+                        freq = 1
+                except Exception as e:
+                    # breakpoint()
+                    pass
+                for _ in range(freq):
+                    files.append(f) 
+
         if files:
             selected_file = random.choice(files)
-            return return_entire_string_after_replacing_patterns(selected_file)
+            return return_entire_string_after_replacing_patterns(selected_file)[0] , selected_file.stem
+        
     if newpath.is_file():
-       return randomLine_helper(newpath.with_suffix('.txt').name) 
+       return randomLine_helper(newpath.with_suffix('.txt').name)[0] , None
+    else:
+       return newpath.stem , None
+
+        # print(newpath)
+        # pass
+        # breakpoint()
 
 def return_entire_string_after_replacing_patterns(filepath:Path):
     with open(filepath, "r") as file:
@@ -34,16 +54,24 @@ def return_entire_string_after_replacing_patterns(filepath:Path):
         # Preprocess the entire content as a single line with newline
         
         # Replace patterns like [something] recursively
-        pattern = re.compile(r"\[([^\[]*?)\]")
+        pattern = re.compile("\[([^\[]*?)\]")
         while pattern.search(content):
             match = pattern.search(content)
             stringfromfile = match.group(1)
-            if '||' not in stringfromfile:
-                replacement = random_line(stringfromfile + ".txt")
+            if '||' not in stringfromfile and ' ' not in stringfromfile:
+                try:
+                    replacement = random_line(stringfromfile + ".txt")[0]
+                    # pass
+                    # print("Hlle")
+                except Exception as e:
+                    print(e)
+
+                    breakpoint()
+                    pass
             else:
                 replacement = random.choice(stringfromfile.split('||'))
             content = content[:match.start()] + replacement + content[match.end():]
-        return content.rstrip('\n')
+        return content.rstrip('\n') , None
 
 def randomLine_helper(fileName="test.txt"):
     try:
@@ -64,7 +92,7 @@ def randomLine_helper(fileName="test.txt"):
                 #     stringfromfile = selectedLine
                 # stringfromfile = pstringfromfile
                 if not '||' in stringfromfile:
-                    replaceMentStr = random_line(stringfromfile + ".txt")
+                    replaceMentStr = random_line(stringfromfile + ".txt")[0]
                 else:
                     replaceMentStr = random.choice(stringfromfile.split('||'))
                     # breakpoint()
@@ -75,7 +103,7 @@ def randomLine_helper(fileName="test.txt"):
             (open("files\\" + fileName,"w")).close()
         selectedLine = fileName.split(".")[0]
     # print("Returning " + selectedLine)
-    return selectedLine.rstrip('\n')
+    return selectedLine.rstrip('\n') , None
     
 def main():
     if not Path('files').is_dir():
@@ -84,7 +112,7 @@ def main():
     
 if __name__ == '__main__':
     os.system("md files")
-    line = random_line("gemini.txt")
+    line = random_line("gemini.txt")[0]
     print(line)
     # with open("result.txt","w") as file:
     #     file.write(line)
