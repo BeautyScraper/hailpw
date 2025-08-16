@@ -202,6 +202,22 @@ def get_success_rate(prompt, positve_csv="pos_prompt_frequency.csv", negative_cs
     success_rate = pos_freq / (pos_freq + neg_freq)
     return success_rate, pos_freq + neg_freq
 
+def click_middle_of_window(page):
+    """
+    Clicks the middle of the current browser window/viewport.
+
+    Args:
+        page: The Playwright Page object.
+    """
+    viewport_size = page.viewport_size
+    width = viewport_size["width"]
+    height = viewport_size["height"]
+
+    middle_x = width // 2
+    middle_y = height // 2
+
+    page.mouse.click(middle_x, middle_y)
+
     
 
 def run(playwright: Playwright) -> None:
@@ -223,7 +239,7 @@ def run(playwright: Playwright) -> None:
         browser = playwright.firefox.launch_persistent_context(user_data_dir,headless=True,downloads_path=download_path)
         page = browser.new_page()
         # breakpoint()
-        page.set_default_timeout(60000 * 2)
+        page.set_default_timeout(60000)
         page.goto("https://gemini.google.com")
         # breakpoint()
         negative_replies_max_count = 5
@@ -254,24 +270,42 @@ def run(playwright: Playwright) -> None:
                 print(Colors.BLUE + f"{ref_prompt_file}: {prompt}" + Colors.RESET)
             
                 print(Colors.YELLOW + f"Iteration {i+1}, User ID: {userid}, Negative Replies Max Count: {negative_replies_max_count} Success Rate:{prompt_success_rate} Total Prompts:{prompt_total_use}"  + Colors.RESET)
-                page.locator(".ql-editor").click()
+                try:
+                    page.locator(".ql-editor").click()
+                except Exception as e:
+                    click_middle_of_window(page)
+                    print(f"Error clicking .ql-editor: {e}")
+                    page.locator(".ql-editor").click()
                 sleep(1)
                 page.locator(".ql-editor").fill(prompt)
-                print("can quit", end=' ')
+                print("can quit", end=' ', flush=True)
                 sleep(5)
-                page.locator(".send-button").scroll_into_view_if_needed()
-                print('now cant')
-                sleep(1)
-                total_text_replys = len(page.locator("[id*=model-response-message-contentr_]").all()) + 1 - 1
-                sleep(1)
+                # page.locator(".send-button").scroll_into_view_if_needed()
+                # sleep(2)
+                # total_text_replys = len(page.locator("[id*=model-response-message-contentr_]").all()) + 1 - 1
+                # sleep(1)
                 # save_inner_html(page, page.locator(".send-button"), f"ss\\{userid}_send_button_before.html")
                 # breakpoint()
-                if not  "hidden" in page.locator(".send-button").locator('[fonticon="send"]').first.get_attribute("class"):
-                    page.locator(".send-button").click()
-                else:
-                    page.screenshot(path=f"ss\\{userid}_send_button_hidden.png")
+                # page.locator(".ql-editor").click()
+                try:
+                    page.locator(".send-button").first.click()
+                except Exception as e:
+                    click_middle_of_window(page)
+                    print(f"Error clicking .ql-editor: {e}")
+                    page.locator(".send-button").first.click()
+                # try:
+                # except Exception as e:
+                #     print(f"Error clicking send button: {e}")
+                #     breakpoint()
+                # page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
+                # if not  "hidden" in page.locator(".send-button").locator('[fonticon="send"]').first.get_attribute("class"):
+                    
+                #     page.locator(".send-button").first.click()
+                # else:
+                #     page.screenshot(path=f"ss\\{userid}_send_button_hidden.png")
                 # save_inner_html(page, page.locator(".send-button", f"ss\\{userid}_send_button_after.html"))
-                
+                print('now cant',flush=True)
+
                 # breakpoint()
                 # negative_replies = ["cannot generate an image","sexually suggestive","can't fulfill that request","find one on the web","pictures for you online","cannot fulfill","still learning how to generate certain kinds of images, so I might not be able","unable to generate an image",  "sexually explicit", "against my guidelines"]
                 with open("negative_replies.txt", "r") as f:
@@ -288,7 +322,8 @@ def run(playwright: Playwright) -> None:
                 image_gen_flag = True
                 # while img_new_reply_count <= total_img_replys and retry_count > 0:
                 while reply.strip() == "" and len(page.locator(".image-button").all()) <= total_img_replys and retry_count > 0:
-                    print(f"",end='.')
+                    print(f"",end='.', flush=True)
+                    # sys.stdout.flush()
                     reply = page.locator("[id*=model-response-message-contentr_]").last.text_content(timeout=5000)
                     sleep(2)
                     # print(f"{total_img_replys} {new_reply_count}",end='.')

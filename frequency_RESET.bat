@@ -1,0 +1,1 @@
+C:\Users\sstic\miniconda\envs\allinone\python.exe "C:\Personal\Developed\Hailuio\frequency_reset.py"
