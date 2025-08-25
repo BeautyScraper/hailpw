@@ -1,0 +1,1 @@
+grep -l "breast" *.txt | sed 's/txt/png/' | xargs -I {} cp {} brest/

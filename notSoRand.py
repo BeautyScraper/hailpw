@@ -47,10 +47,16 @@ def random_line(npath):
         # print(newpath)
         # pass
         # breakpoint()
+def preprocess_content(content):
+    pattern = re.compile("\*\*(\d+)")
+    for match in pattern.finditer(content):
+        content = content[:match.start()] + content[match.end():]
+    return content
 
 def return_entire_string_after_replacing_patterns(filepath:Path):
     with open(filepath, "r") as file:
         content = file.read()
+        # content = preprocess_content(content)
         # Preprocess the entire content as a single line with newline
         
         # Replace patterns like [something] recursively

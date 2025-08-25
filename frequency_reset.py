@@ -26,7 +26,9 @@ def bulk_rename_files(directory, pattern, replacement, file_filter="*.*", dry_ru
             new_name = re.sub(pattern, replacement, file.name)
             target = file.with_name(new_name)
             counter = 1
-
+            # breakpoint()
+            if new_name == file.name:
+                continue
             # Avoid overwriting existing files
             while target.exists():
                 stem = target.stem

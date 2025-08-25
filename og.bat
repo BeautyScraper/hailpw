@@ -1,0 +1,1 @@
+python "D:\Developed\hailpw\get_original_promt_file.py" %1
