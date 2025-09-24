@@ -1,3 +1,4 @@
+import itertools
 from random import choice, shuffle
 import shutil
 import pandas as pd
@@ -71,6 +72,77 @@ def save_prompt_frequency(prompt, filename="prompt_frequency.csv"):
     
     df.to_csv(filename, index=False)
 
+def is_video_processed(video_id, log_file="processed_videos.log"):
+    if not os.path.exists(log_file):
+        return False
+    with open(log_file, 'r') as f:
+        processed_ids = f.read().splitlines()
+    return video_id in processed_ids
+def video_processed(video_id, log_file="processed_videos.log"):
+    with open(log_file, 'a') as f:
+        f.write(f"{video_id}\n")
+
+def download_videos(page):
+    # breakpoint()
+    try:
+        # page.locator(".model-popover-content-title > i:nth-child(2)").click(timeout=2000)
+        page.locator('i[data-event="video_model_recommend_modal_close"]').click(timeout=2000)
+    except:
+        pass
+    # if page.locator(".model-popover-content-title > i:nth-child(2)").click().count() > 0:
+    imgboxs = page.locator(".image-render-box").all()
+    print(f"Found {len(imgboxs)} videos to process.")
+    for i, imgbox in enumerate(reversed(imgboxs)):
+        # breakpoint()
+        imgbox.scroll_into_view_if_needed()
+        # if imgbox.locator("img").count() > 1:
+        #     print(f"Skipping video {i+1} as it has many img element.")
+            # breakpoint()
+            # continue
+        if imgbox.locator("img").first.get_attribute('src') is None:
+            print(f"Skipping video {i+1} as it has no data-src attribute.")
+            continue
+        id =  imgbox.locator("img").first.get_attribute('src').split('/')[-1]
+
+         # Check if the video has already been processed
+        if is_video_processed(id):
+            print(f"Video {id} has already been processed. Skipping...")
+            continue
+
+        print(f"Processing video {i+1}/{len(imgboxs)}")
+        try:
+            sleep(1)
+            process_imgbox(page, imgbox)
+        except Exception as e:
+            print(f"Error processing video {i+1}: {e}")
+            # breakpoint()
+            continue
+        # sleep(5)
+        video_processed(id)
+          # Short delay between processing each video
+
+def process_imgbox(page, imgbox):
+    # imgbox = page.locator(".image-render-box").nth(0)
+    # id =  imgbox.locator("img").get_attribute('data-src').split('/')[-1]
+    imgbox.hover()
+    page.locator(".el-icon-more.el-popover__reference").nth(0).hover()
+    elem = imgbox.locator('[data-id="download"]')
+    if elem.count() > 0:
+        download_path = os.path.abspath(r"seart_downloads")
+        elem.first.click()
+        with page.expect_download(timeout=16000) as download_info:
+            download = download_info.value
+        extension = download_info.value.suggested_filename.split('.')[-1]
+
+        rand_filename = f"{int(time())}.{extension}"
+        #create 
+        if extension.lower() in ['mp4', 'mov', 'avi', 'mkv']:
+            # breakpoint()
+            download_path = os.path.abspath(r"seart_downloads\mp4s")
+        download.save_as(os.path.join(download_path, rand_filename))
+    
+
+
 def download_image(page,i,filename=""):
     download_path = os.path.abspath("gemni_downloads")
     print(f"Downloading image {i+1}")
@@ -99,7 +171,7 @@ def download_image(page,i,filename=""):
     print(f"Downloaded to temp: {downloaded_file_path}")
     download.save_as(os.path.join(download_path, rand_filename))
     print(f"Saved to: {os.path.join(download_path, download.suggested_filename)}")
-    # sleep(10)
+    sleep(20)
     page.locator(".arrow-back-button").first.click()
         
 
@@ -146,36 +218,93 @@ def save_inner_html(page, element, filepath: str):
 
 def random_image_from_dir(image_dir):
     """Returns a random image file from the specified directory."""
-    images = [x for x in image_dir.iterdir() if x.is_file() and x.suffix.lower() in ['.png', '.jpg', '.jpeg']]
+    images = [x for x in image_dir.rglob('*.*') if x.is_file() and x.suffix.lower() in ['.png', '.jpg', '.jpeg']]
     if not images:
         print("No images found in the directory.")
+        breakpoint()
         return None
     return choice(images)
+
+def generate_images(page):
+    with open("seaart_models.txt", "r", encoding="utf-8") as f:
+        urls = [line.strip() for line in f if line.strip()]
+    if not urls:
+        print("No URLs found in seaart_models.txt")
+        return
+    selected_url = choice(urls)
+    print(f"Randomly selected model URL: {selected_url}")
+    page.goto(selected_url)
+    page.locator("div.btns-container-item:nth-child(1)").click()
+    # color = choice(['yellow','pink', 'black' , 'black' , 'black' , 'white' , 'red', 'blue', 'green', 'purple', 'orange', 'grey', 'silver', 'gold' , '', ''])
+    # leather = choice(['leather', 'latex', 'PVC', 'patent leather', 'faux leather', ''])
+    # breakpoint()
+    prompt, _ = random_line('seaart.txt')
+    # breakpoint()
+    # sleep(2)
+    def fill_prompt():
+        try:
+            page.locator(".trigger-word-area-use-all").click(timeout=2000)
+        except:
+            pass
+
+        dta = page.locator("#easyGenerateInput")
+        dta.fill("")
+        dta.fill( dta.input_value() + " " + prompt)
+        print("Current prompt in input box:", dta.input_value())
+        if not prompt in dta.input_value():
+            fill_prompt()
+        # dta.click()
+    # sleep(5)
+    fill_prompt()
+    credits_required = int(page.locator(".generate-btn-sub").inner_text())
+    credits_available = int(page.locator("div.stamina:nth-child(1) > div:nth-child(2)").inner_html())
+    i = page.locator('div[data-event="generate_click_image_numbers"]').count() - 2
+    while credits_available < credits_required and i >= 0:
+        print(f"Not enough credits to generate image. Available: {credits_available}, Required: {credits_required}")
+        page.locator('div[data-event="generate_click_image_numbers"]').nth(i).click()
+        # fill_prompt()
+        sleep(2)
+        i -= 1
+        credits_required = int(page.locator(".generate-btn-sub").inner_text())
+        # credits_available = int( page.locator(".number").first.inner_text())
+    
+    # breakpoint()
+    if i >= 0:    
+        page.locator("#generate-btn").click()
 
 def run(playwright: Playwright) -> None:
     userid = r'ash' 
     profile_dir = r'C:\dumpinggrounds\browserprofileff'
-    download_path = os.path.abspath("gemni_downloads")
+    discord_dir = r"C:\dumpinGGrounds\ffprofilediscord"
+    download_path = os.path.abspath("seart_downloads")
     os.makedirs(download_path, exist_ok=True)
-    dirs = [x for x in Path(profile_dir).iterdir() if x.is_dir()]
+    dirs = [x for x in itertools.chain(Path(discord_dir).iterdir(), Path(profile_dir).iterdir()) if x.is_dir()]
     shuffle(dirs)
-    image_dir = Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_kiss")
+    image_dir = Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video")
+
     for user in dirs:
         if not user.is_dir():
             continue
         userid = user.name
-        if "chilli" in userid:
-            continue
+        
+        # if not 'summerschoolcseg219' in userid:
+        #     print(f"Skipping user {userid} as it is a colab user")
+        #     continue
+        
         print(f"Using user ID: {userid}")
-        user_data_dir = Path(rf'{profile_dir}\{userid}')
-        browser = playwright.firefox.launch_persistent_context(user_data_dir,headless=False,downloads_path=download_path)
+        # user_data_dir = Path(rf'{profile_dir}\{userid}')
+        browser = playwright.firefox.launch_persistent_context(str(user),headless=True,downloads_path=download_path)
         page = browser.new_page()
         page.set_default_timeout(60000 * 2)
         # breakpoint()
         page.goto("https://www.seaart.ai")
 
         negative_replies_max_count = 5
-        for i in range(100):
+        for i in range(1):
+            if not any(user.iterdir()):
+                print(f"User directory {user} is empty.")
+                breakpoint()
+            
             # breakpoint()
             # if "sense" in userid:
             #     breakpoint()
@@ -186,28 +315,78 @@ def run(playwright: Playwright) -> None:
             #https://www.seaart.ai/create/video?id=3af4aa8d07e30b4a895b45771232f2bm&model_ver_no=a1b2c3d4-e5f6-47g8-h9i0-j1k2l3m4n5o6
             try:
                 page.goto("https://www.seaart.ai/create/video?id=3af4aa8d07e30b4a895b45771232f2bm&model_ver_no=a1b2c3d4-e5f6-47g8-h9i0-j1k2l3m4n5o6")
-                breakpoint()
-                page.locator(".gift-btn").click()
-                sleep(5)
+                if page.locator(".user-daily-close > i:nth-child(1)").count() > 0:
+                    page.locator(".user-daily-close > i:nth-child(1)").click()
+                if page.locator(".gift-btn").count() < 1:
+                    print("No gift button found, possibly out of credits.")
+                    # breakpoint()
+                    # break
+                try:
+                    page.locator(".gift-btn").click()
+                except:
+                    print("Could not click gift button, possibly out of credits.")
+                    # breakpoint()
+                    # break
+                sleep(2)
                 # breakpoint()
                 # page.locator(".claim-button").first.click()
+                if page.locator(".claim-button").count() < 1:
+                    print("No claim button found, possibly out of credits.")
+                    breakpoint()
+                    break
                 page.locator(".claim-button").last.click()
                 page.goto("https://www.seaart.ai/create/video?id=3af4aa8d07e30b4a895b45771232f2bm&model_ver_no=a1b2c3d4-e5f6-47g8-h9i0-j1k2l3m4n5o6")
-                page.locator("div.upload-change-item:nth-child(1)").click()
-                page.locator(".video-upload > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)").click()
-                
-                page.locator(".el-upload__input").set_input_files(str(random_image_from_dir(image_dir)))
-                page.locator("#easyGenerateVideoInput").fill("They started kissing each other passionately, their hands exploring each other's bodies.")
-                page.locator("div.generate-btn:nth-child(4)").click()
-                raise Exception("This is a test exception to see if the error handling works")
-                # sleep(60)
-                
+                # breakpoint()
+                sleep(2)
+                # uploaded = page.locator(".image-box-mask").count()
+                # breakpoint()
+                if int( page.locator(".number").first.inner_text()) > 90:
+                    sel_img = random_image_from_dir(image_dir)
+                    sleep(2)
+                    first = True
+                    while  page.locator(".image-box-mask").count() == 0:
+                        if not first:
+                           sel_img.unlink() 
+                        sel_img = random_image_from_dir(image_dir)
+                        page.locator(".el-upload__input").nth(1).set_input_files(str(sel_img))
+                        sleep(15)
+                        print(f"Waiting for image to upload...{page.locator('.image-box-mask').count()}",flush=True)
+                        first = False
+
+                    # page.locator("div.upload-change-item:nth-child(1)").click()
+                    # page.locator(".video-upload > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)").click()
+                    # while (page.locator(".el-upload__input").count() > 2):
+                    sleep(2)
+                    print("Image uploaded successfully")
+                    dta = page.locator(".video-custom-textarea")
+                    dta.click()
+                    prompt_file = sel_img.parent.with_suffix('.txt')
+                    prompt = prompt_file.read_text()
+                    # breakpoint()
+                    dta.fill(prompt)
+                    # page.locator("#easyGenerateVideoInput").fill()
+                    # page.locator("div.generate-btn:nth-child(4)").click()
+                    page.locator("div.generate-btn:nth-child(4)").click()
+                    # sleep(60)
+                # page.locator(".image-render-box").nth(0).hover()
+                elif int(page.locator("div.stamina:nth-child(1) > div:nth-child(2)").inner_html()) >= 8:
+                    # while int( page.locator(".number").first.inner_text()) >= 8:
+                    # print("No image boxes found, possibly out of credits.")
+                    # breakpoint()
+                    generate_images(page)
+                    # break
+                else:
+                    download_videos(page)
+                # breakpoint()
+                # raise Exception("This is a test exception to see if the error handling works")
+                sleep(3)
             except Exception as e:
                 page.screenshot(path=f"seart\\{userid}_error.png")
                 print(f"An error occurred: {e}")
                 print("An error occurred, retrying...with different user\n\n\n\n\n\n\n")
                 break
         # breakpoint()
+        sleep(3)
         # elems = page.locator("generated-image:nth-child(1) > single-image:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > download-generated-image-button:nth-child(1) > button:nth-child(1)").all()
         browser.close()
         continue
