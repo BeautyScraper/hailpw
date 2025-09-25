@@ -13,6 +13,7 @@ from notSoRand import random_line
 from os import listdir
 import os
 from os.path import isdir, join
+from image_prompt import get_random_image_and_prompt
 
 
 
@@ -165,12 +166,14 @@ def get_random_image_and_prompt(dir):
     image_dir = Path(dir)
     sel_img = random_image_from_dir(image_dir)
     prompt_file = sel_img.parent.with_suffix('.txt')
+    if sel_img.with_suffix('.txt').exists():
+        prompt_file = sel_img.with_suffix('.txt')
     prompt = prompt_file.read_text()
     return sel_img, prompt
 
 def create_video(page):
     page.goto("https://unlucid.ai/video")
-    img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video"
+    img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\unlucido"
     sel_img, prompt = get_random_image_and_prompt(img_dir)
     print(f"Using prompt: {prompt}")
     page.locator("#input").fill(prompt)
@@ -255,7 +258,7 @@ def run(playwright: Playwright) -> None:
     os.makedirs(download_path, exist_ok=True)
     dirs = [x for x in itertools.chain( Path(profile_dir).iterdir()) if x.is_dir()]
     shuffle(dirs)
-    image_dir = Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video")
+    image_dir = Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\unlucid")
     
     for user in dirs:
         if not user.is_dir():
@@ -283,9 +286,9 @@ def run(playwright: Playwright) -> None:
 
         # breakpoint()
 
-        sleep(2)
-        if  int(page.locator(".counter").inner_text()) >= 15:
-            create_video(page)
+        # sleep(2)
+        # if  int(page.locator(".counter").inner_text()) >= 15:
+        #     create_video(page)
         # if  int(page.locator(".counter").inner_text()) >= 5:
         #     create_image(page)
         # download_images(page)

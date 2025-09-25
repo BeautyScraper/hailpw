@@ -4,7 +4,7 @@ set /p dirname=Enter the name of the directory to create:
 
 cd C:\Personal\Developed\Hailuio\gemni_downloads
 ren * *.png
-double_d.py %cd%
+REM double_d.py %cd%
 
 
 if exist "%dirname%" (

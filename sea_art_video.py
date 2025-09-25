@@ -13,6 +13,7 @@ from notSoRand import random_line
 from os import listdir
 import os
 from os.path import isdir, join
+from image_prompt import get_random_image_and_prompt
 
 
 
@@ -240,15 +241,15 @@ def generate_images(page):
     # breakpoint()
     prompt, _ = random_line('seaart.txt')
     # breakpoint()
-    # sleep(2)
+    sleep(2)
     def fill_prompt():
-        try:
-            page.locator(".trigger-word-area-use-all").click(timeout=2000)
-        except:
-            pass
-
         dta = page.locator("#easyGenerateInput")
         dta.fill("")
+        try:
+            page.locator(".trigger-word-area-use-all").click(timeout=5000)
+        except:
+            pass
+            # breakpoint()
         dta.fill( dta.input_value() + " " + prompt)
         print("Current prompt in input box:", dta.input_value())
         if not prompt in dta.input_value():
@@ -280,7 +281,7 @@ def run(playwright: Playwright) -> None:
     os.makedirs(download_path, exist_ok=True)
     dirs = [x for x in itertools.chain(Path(discord_dir).iterdir(), Path(profile_dir).iterdir()) if x.is_dir()]
     shuffle(dirs)
-    image_dir = Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video")
+    image_dir = Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\sea_art")
 
     for user in dirs:
         if not user.is_dir():
@@ -293,7 +294,7 @@ def run(playwright: Playwright) -> None:
         
         print(f"Using user ID: {userid}")
         # user_data_dir = Path(rf'{profile_dir}\{userid}')
-        browser = playwright.firefox.launch_persistent_context(str(user),headless=True,downloads_path=download_path)
+        browser = playwright.firefox.launch_persistent_context(str(user),headless=False,downloads_path=download_path)
         page = browser.new_page()
         page.set_default_timeout(60000 * 2)
         # breakpoint()
@@ -341,13 +342,13 @@ def run(playwright: Playwright) -> None:
                 # uploaded = page.locator(".image-box-mask").count()
                 # breakpoint()
                 if int( page.locator(".number").first.inner_text()) > 90:
-                    sel_img = random_image_from_dir(image_dir)
+                    sel_img, prompt = get_random_image_and_prompt(image_dir)
                     sleep(2)
                     first = True
                     while  page.locator(".image-box-mask").count() == 0:
                         if not first:
                            sel_img.unlink() 
-                        sel_img = random_image_from_dir(image_dir)
+                        sel_img, prompt = get_random_image_and_prompt(image_dir)
                         page.locator(".el-upload__input").nth(1).set_input_files(str(sel_img))
                         sleep(15)
                         print(f"Waiting for image to upload...{page.locator('.image-box-mask').count()}",flush=True)
@@ -360,12 +361,12 @@ def run(playwright: Playwright) -> None:
                     print("Image uploaded successfully")
                     dta = page.locator(".video-custom-textarea")
                     dta.click()
-                    prompt_file = sel_img.parent.with_suffix('.txt')
-                    prompt = prompt_file.read_text()
-                    # breakpoint()
+                    # prompt_file = sel_img.parent.with_suffix('.txt')
+                    # prompt = prompt_file.read_text()
                     dta.fill(prompt)
                     # page.locator("#easyGenerateVideoInput").fill()
                     # page.locator("div.generate-btn:nth-child(4)").click()
+                    breakpoint()
                     page.locator("div.generate-btn:nth-child(4)").click()
                     # sleep(60)
                 # page.locator(".image-render-box").nth(0).hover()

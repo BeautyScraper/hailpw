@@ -1,23 +1,23 @@
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
-C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400
+C:/Users/sstic/miniconda/envs/allinone/python.exe c:/Personal/Developed/Hailuio/Gemni_img.py && timeout /t 2400

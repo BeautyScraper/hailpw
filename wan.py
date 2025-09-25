@@ -14,15 +14,8 @@ from os import listdir
 import os
 from os.path import isdir, join
 import requests
+from image_prompt import get_random_image_and_prompt
 
-def random_image_from_dir(image_dir):
-    """Returns a random image file from the specified directory."""
-    images = [x for x in image_dir.rglob('*.*') if x.is_file() and x.suffix.lower() in ['.png', '.jpg', '.jpeg']]
-    if not images:
-        print("No images found in the directory.")
-        breakpoint()
-        return None
-    return choice(images)
 
 def download_video(video_url, videoid, download_dir, filename):
     download_path = Path(download_dir) / filename
@@ -34,7 +27,7 @@ def download_video(video_url, videoid, download_dir, filename):
             if videoid in [line.strip() for line in f]:
                 already_downloaded = True
     if already_downloaded or download_path.exists():
-        print(f"Video {videoid} already downloaded (checked with records file).")
+        # print(f"Video {videoid} already downloaded (checked with records file).")
         return True
 
     # Use requests to download the video reliably
@@ -49,7 +42,7 @@ def download_video(video_url, videoid, download_dir, filename):
             f.write(videoid + "\n")
         return True
     else:
-        print(f"Failed to download video from {video_url}, status code: {response.status_code}")
+        # print(f"Failed to download video from {video_url}, status code: {response.status_code}")
         return False
         breakpoint()
 
@@ -67,25 +60,21 @@ def download_files(page):
         x = download_video(template_url, video_id, download_dir, filename)
         if not x:
             template_url2 = f"https://cdn.wanxai.com/wanx/{wanuserid}/video_extension/{video_id}.mp4"
-            download_video(template_url2, video_id, download_dir, filename):
-        Path(download_dir, filename).with_suffix('.txt').write_text(prompt.inner_text())
+            download_video(template_url2, video_id, download_dir, filename)
+        if not Path(download_dir, filename).with_suffix('.txt').exists():
+            Path(download_dir, filename).with_suffix('.txt').write_text(prompt.inner_text())
 
         
     # breakpoint()
 
-def get_random_image_and_prompt(dir):
-    image_dir = Path(dir)
-    sel_img = random_image_from_dir(image_dir)
-    prompt_file = sel_img.parent.with_suffix('.txt')
-    prompt = prompt_file.read_text()
-    return sel_img, prompt
+
 
 def generate_video(page, name):
     page.goto("https://create.wan.video/generate")
     sleep(5)
     if page.locator('button', has_text='Get Member').count() > 0  or page.locator('div', has_text='Estimated time').count() > 0:
         return
-    img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\wan_video"
+    img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan"
     sel_img, prompt = get_random_image_and_prompt(img_dir)
     page.locator('div', has_text= "image and describe").last.click() 
     page.locator('div', has_text= "image and describe").last.type(prompt)
