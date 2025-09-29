@@ -162,18 +162,11 @@ def create_image(page):
     page.locator("#input").fill(prompt)
     page.locator("button.bg-primary").click()
     # breakpoint()
-def get_random_image_and_prompt(dir):
-    image_dir = Path(dir)
-    sel_img = random_image_from_dir(image_dir)
-    prompt_file = sel_img.parent.with_suffix('.txt')
-    if sel_img.with_suffix('.txt').exists():
-        prompt_file = sel_img.with_suffix('.txt')
-    prompt = prompt_file.read_text()
-    return sel_img, prompt
+
 
 def create_video(page):
     page.goto("https://unlucid.ai/video")
-    img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\unlucido"
+    img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\unlucid"
     sel_img, prompt = get_random_image_and_prompt(img_dir)
     print(f"Using prompt: {prompt}")
     page.locator("#input").fill(prompt)
@@ -183,7 +176,7 @@ def create_video(page):
     page.locator("div.vidb\:w-\[160px\]:nth-child(3) > button:nth-child(1)").click()
     # page.locator("#video-create-textarea").click()
     # page.locator("#video-create-textarea").fill(prompt)
-    breakpoint()
+    # breakpoint()
     page.locator("button.bg-primary").click()
     # page.get_by_role("button", name="4").click()
     sleep(5)
@@ -269,7 +262,7 @@ def run(playwright: Playwright) -> None:
         
         print(f"Using user ID: {userid}")
         # user_data_dir = Path(rf'{profile_dir}\{userid}')
-        browser = playwright.firefox.launch_persistent_context(str(user),headless=False,downloads_path=download_path)
+        browser = playwright.firefox.launch_persistent_context(str(user),headless=True,downloads_path=download_path)
         page = browser.new_page()
         page.set_default_timeout(30000)
         page.goto("https://unlucid.ai/gems")

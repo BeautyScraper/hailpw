@@ -1,6 +1,6 @@
 import itertools
 import profile
-from random import choice, shuffle
+from random import choice, randint, shuffle
 import shutil
 import pandas as pd
 from playwright.sync_api import Playwright, sync_playwright, expect
@@ -9,7 +9,6 @@ from scrapy.http import HtmlResponse
 from time import sleep, time
 import re
 import json
-import pyperclip
 
 import tqdm
 from user_id import userids , img_dir
@@ -21,9 +20,6 @@ import requests
 from image_prompt import get_random_image_and_prompt
 from oldest_time import update_oldest_datetime
 
-update_prompt = True
-prompt_checking = True
-force_headless = False
 
 def download_video(video_url, videoid, download_dir, filename):
     download_path = Path(download_dir) / filename
@@ -54,51 +50,28 @@ def download_video(video_url, videoid, download_dir, filename):
         return False
         breakpoint()
 
-def download_files(page, name='wan'):
+def download_files(page):
     download_dir = os.path.abspath(r"seart_downloads\mp4s")
     sleep(5)
     params = page.locator('#tb-beacon-aplus').get_attribute('exparams') 
     match = re.search(r'userid=(\d+)', params)
     wanuserid = match.group(1) if match else None
-    downloaded_something = False
-    for vdiv,prompt in zip(page.locator('div.infinite-scroll-component').locator('div[id*="__"]').all(), page.locator('span.prompt-tooltip+span.anticon[role="img"]').all()):
+    for vdiv,prompt in zip(page.locator('div.infinite-scroll-component').locator('div[id*="__"]').all(), page.locator(".prompt-tooltip").all()):
         video_id = vdiv.get_attribute('id').split('__')[0]
         template_url = f"https://cdn.wanxai.com/wanx/{wanuserid}/image_to_video/{video_id}.mp4"
         # breakpoint()
-        filename = f"{video_id}_{name}_{wanuserid}_.mp4"
+        filename = f"wan_{wanuserid}_{video_id}.mp4"
         x = download_video(template_url, video_id, download_dir, filename)
-        if x:
-            downloaded_something = True
         if not x:
             template_url2 = f"https://cdn.wanxai.com/wanx/{wanuserid}/video_extension/{video_id}.mp4"
             download_video(template_url2, video_id, download_dir, filename)
         if not Path(download_dir, filename).with_suffix('.txt').exists() and Path(download_dir, filename).exists():
-            message = ""
-            prompt.click(force=True)
-            while len(message) <=3:
-                message = pyperclip.paste() 
-                print(message)
-                sleep(1)
-
-            # breakpoint()
-            Path(download_dir, filename).with_suffix('.txt').write_text(message)
-    return downloaded_something
+            Path(download_dir, filename).with_suffix('.txt').write_text(prompt.inner_text())
 
         
     # breakpoint()
 
-def infinite_video(page):
-    if page.locator('div.infinite-scroll-component').locator('div[id*="__"]').nth(0).locator('video').count() == 0 and download_files(page):
-        print('last one was porn')
-        page.locator('button', has_text="rerun").first.click()
-        page.locator('button', has_text='ccelerate').click(timeout=10000)
-    while page.locator('div', has_text='Estimated time').count() > 0:
-        sleep(3)
-        
-        # breakpoint()
-    if page.locator('div', has_text='ust a moment').count() > 0:
-        print("wait for just a moment to finish")
-        sleep(20)
+
 
 def generate_video(page, name):
     if page.url != "https://create.wan.video/generate":
@@ -106,25 +79,13 @@ def generate_video(page, name):
         sleep(5)
     sleep(1)
     while page.locator('div', has_text='Estimated time').count() > 0:
-        print('Video generated Estimated time')
         sleep(3)
-        return
         
-    # breakpoint()
-    retries = 100
-    while page.locator('div', has_text='ust a moment').count() > 0 and retries > 0:
-        retries -= 1
+        # breakpoint()
+    if page.locator('div', has_text='ust a moment').count() > 0:
         print("wait for just a moment to finish")
-        sleep(3)
-    if page.locator('div.infinite-scroll-component').locator('div[id*="__"]').nth(0).locator('video').count() == 0 and download_files(page,name) and  page.locator('button', has_text='Get Member').count() == 0 and not update_prompt:
-        print('last one was porn')
-        page.locator('button', has_text="rerun").first.click()
-        try:
-            page.locator('button', has_text='ccelerate').click(timeout=10000)
-        except:
-            pass
-        # return
-        # download_files(page)
+        sleep(10)
+        download_files(page)
     if page.locator('button', has_text='Get Member').count() > 0  or page.locator('div', has_text='Estimated time').count() > 0 or page.locator('div', has_text='Just a moment').count() > 0:
         return
     img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan"
@@ -152,16 +113,6 @@ def generate_video(page, name):
             page.locator('div[data-test-id="creation-form-box-10"]').click() 
             page.locator('div[data-test-id="creation-form-button-resolution"]').click()
             page.locator('div[data-test-id="creation-form-box-1920*1080"]').click()
-        elif available_credits >= 10:
-
-            page.locator('div[data-test-id="creation-form-button-model"]').click()
-            page.locator('div[data-test-id="creation-form-box-Wan2_5"]').click()
-            page.locator('div[data-test-id="creation-form-button-resolution"]').click()
-            page.locator('div[data-test-id="creation-form-box-640*480"]').click()
-            page.locator('div[data-test-id="creation-form-button-duration"]').click()
-            page.locator('div[data-test-id="creation-form-box-10"]').click()
-            
-            # breakpoint()
         elif available_credits >= 5:
 
             page.locator('div[data-test-id="creation-form-button-model"]').click()
@@ -169,13 +120,10 @@ def generate_video(page, name):
             page.locator('div[data-test-id="creation-form-button-resolution"]').click()
             page.locator('div[data-test-id="creation-form-box-1280*720"]').click()
             # breakpoint()
-            # return
     except:
         pass
-    if prompt_checking:
-        breakpoint()
-    # breakpoint()
     sleep(3)
+    # breakpoint()
     with page.expect_response("**/api/common/imageGen") as response_info:
         page.locator('div[data-test-id="creation-form-button-submit"]').click()
     response = response_info.value
@@ -218,13 +166,45 @@ def claim_free_credits(page):
     except:
         print("No small button to click.")
 
+def register(browser, page):
+        sleep(5)
+        if page.locator('span', has_text='Sign up').count() < 1:
+            return
+        page2 = browser.new_page()
+        page2.set_default_timeout(120000)
+        page2.goto("https://tempmailo.com/")
+        # page2.locator('button', has_text='Change').first.click()
+        page2.locator('button', has_text='Copy').click()
+        pwd = 'c6556Bhg47w5PYCv'
+        usrname = f'ghtyrt{randint(100, 999)}' 
+        page.locator('span', has_text='Sign up').click()
+        f = page.locator('div.ant-form-item.ant-form-item-vertical').locator('.ant-input') 
+        f.nth(0).fill(usrname)
+        f.nth(1).focus()
+        page.keyboard.press("Control+V")
+        f.nth(2).fill(pwd)
+        f.nth(3).fill(pwd)
+        sleep(10)
+        page.locator('button', has_text = 'continue').click()
+        sleep(15)
+        message = 'heloo'
+        while not 'verification code within' in message:
+            page2.locator('.mail-item').first.click()
+            message = page2.frame_locator("#fullmessage").locator("body").inner_text()
+            sleep(2)
+        # breakpoint()
+        # try:
+        # except:
+        #     pass
+        otp = re.search('\d{6}', message).group(0)
+        page.locator('input.ant-input').fill(otp) 
+        sleep(2)
+        page.locator('button', has_text = 'continue').click()
+        # breakpoint()
 
 
 def run(playwright: Playwright) -> None:
     userid = r'ash' 
-    headless = True
-    if prompt_checking:
-        headless = False
     profile_dir = r'C:\dumpinggrounds\browserprofileff'
     discord_dir = r"C:\dumpinGGrounds\ffprofilediscord"
     github = r"C:\dumpinGGrounds\ffgithub"
@@ -233,63 +213,43 @@ def run(playwright: Playwright) -> None:
     # profile_dirs = [profile_dir, discord_dir, github, tempmail]
     download_path = os.path.abspath("gemni_downloads")
     os.makedirs(download_path, exist_ok=True)
-    dirs = [x for x in itertools.chain( Path(profile_dir).iterdir(), Path(github).iterdir(), Path(discord_dir).iterdir(), Path(tempmail).iterdir()) if x.is_dir()]
-    # dirs = [x for x in itertools.chain( Path(cellular).iterdir()) if x.is_dir()]
+    dirs = [x for x in Path(cellular).iterdir() if x.is_dir()]
     shuffle(dirs)
-    exclude_user = []
-    if prompt_checking:
-        headless = True
-    while True:
-        exclude_user_file = Path("exclude_user.txt")
-        if exclude_user_file.exists():
-            with exclude_user_file.open("r", encoding="utf-8") as f:
-                exclude_user = [line.strip() for line in f if line.strip()]
-        for user in tqdm.tqdm(dirs):
-            print(f'{user.parent}\\{user.name}')
-            if not user.is_dir():
-                continue
-            
-            userid = user.name
-            print(f"Using user ID: {userid}")
-            # if  'ffgithub' not in str(user) or 'temp' not in str(user):
-            # if not 'browserprofileff\sstico1'  in str(user):
-            #     continue
-            # if not 'sstico1'  in str(user):
-            #     continue
-            if f'{user.parent}\\{user.name}' in exclude_user:
 
-                continue
+    for user in tqdm.tqdm(dirs):
 
-            browser = playwright.firefox.launch_persistent_context(str(user),headless=headless or force_headless,downloads_path=download_path)
-            # user_data_dir = Path(rf'{profile_dir}\{userid}')
-            page = browser.new_page()
-            page.set_default_timeout(30000)
-            page.goto("https://create.wan.video/generate")
-            # breakpoint()
-            sleep(3)
-            if page.locator('button', has_text='Get Member').count() > 0:
-                print(f'excluded_{user.parent}\\{user.name}')
-                exclude_user.append(f'{user.parent}\\{user.name}')
-                with exclude_user_file.open("a", encoding="utf-8") as f:
-                    f.write(f'{user.parent}\\{user.name}\n')
-            # sleep(500)
-            # browser.close()
-            # continue
-            # if 'ffprofilediscord' in str(user):
-            # sleep(9000)
-            claim_free_credits(page)
-            generate_video(page, userid)
-            # download_files(page)
+        if not user.is_dir():
+            continue
+        
+        userid = user.name
+        print(f"Using user ID: {userid}")
+        # if  'ffgithub' not in str(user) or 'temp' not in str(user):
+        # if not 'alindn755'  in str(user):
+        #     continue
 
-            update_oldest_datetime([x.inner_text() for x  in page.locator('span', has_text="2025").all()[:1]])
-            
-            browser.close()
-        if len(dirs) - len(exclude_user) < 1:
-            break
-        for i in range(2,0,-1):
-            sleep( 60)
-            print(f'{i} \n',end='',flush=True)
+
+        #     continue
+        browser = playwright.firefox.launch_persistent_context(str(user),headless=False,downloads_path=download_path)
+        # user_data_dir = Path(rf'{profile_dir}\{userid}')
+
+        page = browser.new_page()
+        page.set_default_timeout(120000)
+        page.goto("https://create.wan.video/generate")
+        register(browser, page)
+        breakpoint()
+        # sleep(500)
+        # browser.close()
         # continue
+        # if 'ffprofilediscord' in str(user):
+        # sleep(9000)
+        claim_free_credits(page)
+        generate_video(page, userid)
+        download_files(page)
+
+        update_oldest_datetime([x.inner_text() for x  in page.locator('span', has_text="2025").all()[:1]])
+        
+        browser.close()
+        continue
        
 
 with sync_playwright() as playwright:

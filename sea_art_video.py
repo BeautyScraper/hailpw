@@ -1,5 +1,5 @@
 import itertools
-from random import choice, shuffle
+from random import choice, randint, shuffle
 import shutil
 import pandas as pd
 from playwright.sync_api import Playwright, sync_playwright, expect
@@ -8,12 +8,14 @@ from scrapy.http import HtmlResponse
 from time import sleep, time
 import re
 import json
+
+from tqdm import tqdm
 from user_id import userids , img_dir
 from notSoRand import random_line
 from os import listdir
 import os
 from os.path import isdir, join
-from image_prompt import get_random_image_and_prompt
+from image_prompt import get_random_image_and_prompt, save_all_req_resp
 
 
 
@@ -108,6 +110,8 @@ def download_videos(page):
          # Check if the video has already been processed
         if is_video_processed(id):
             print(f"Video {id} has already been processed. Skipping...")
+            if (randint(1, 100) <= 20):
+                break
             continue
 
         print(f"Processing video {i+1}/{len(imgboxs)}")
@@ -225,16 +229,27 @@ def random_image_from_dir(image_dir):
         breakpoint()
         return None
     return choice(images)
+def replace_a_line_in_file(file_path, target_line, new_line):
+    with open(file_path, "r", encoding="utf-8") as file:
+        lines = file.readlines()
+    with open(file_path, "w", encoding="utf-8") as file:
+        for line in lines:
+            if line.strip() == target_line:
+                file.write(new_line + "\n")
+            else:
+                file.write(line)
 
 def generate_images(page):
     with open("seaart_models.txt", "r", encoding="utf-8") as f:
-        urls = [line.strip() for line in f if line.strip()]
+        urls = [line.strip().split("@@")[0] for line in f if line.strip() and '##' not in line]
     if not urls:
         print("No URLs found in seaart_models.txt")
         return
     selected_url = choice(urls)
     print(f"Randomly selected model URL: {selected_url}")
     page.goto(selected_url)
+    replace_a_line_in_file("seaart_models.txt", selected_url, f"{selected_url}@@{ page.title()}")
+    # breakpoint()
     page.locator("div.btns-container-item:nth-child(1)").click()
     # color = choice(['yellow','pink', 'black' , 'black' , 'black' , 'white' , 'red', 'blue', 'green', 'purple', 'orange', 'grey', 'silver', 'gold' , '', ''])
     # leather = choice(['leather', 'latex', 'PVC', 'patent leather', 'faux leather', ''])
@@ -258,18 +273,22 @@ def generate_images(page):
     # sleep(5)
     fill_prompt()
     credits_required = int(page.locator(".generate-btn-sub").inner_text())
-    credits_available = int(page.locator("div.stamina:nth-child(1) > div:nth-child(2)").inner_html())
+    credit_elem = page.locator("div.stamina:nth-child(1) > div:nth-child(2)")
+    credits_available = int(credit_elem.inner_html())
     i = page.locator('div[data-event="generate_click_image_numbers"]').count() - 2
-    while credits_available < credits_required and i >= 0:
+    page.locator('div[data-event="generate_click_image_numbers"]').nth(i+1).click()
+    # breakpoint()
+    while credits_available <= credits_required and i >= 0:
         print(f"Not enough credits to generate image. Available: {credits_available}, Required: {credits_required}")
+        i -= 1
         page.locator('div[data-event="generate_click_image_numbers"]').nth(i).click()
         # fill_prompt()
-        sleep(2)
-        i -= 1
+        
+        sleep(8)
+        credits_available = int(credit_elem.inner_html())
         credits_required = int(page.locator(".generate-btn-sub").inner_text())
         # credits_available = int( page.locator(".number").first.inner_text())
     
-    # breakpoint()
     if i >= 0:    
         page.locator("#generate-btn").click()
 
@@ -283,24 +302,24 @@ def run(playwright: Playwright) -> None:
     shuffle(dirs)
     image_dir = Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\sea_art")
 
-    for user in dirs:
+    for user in tqdm(dirs):
         if not user.is_dir():
             continue
         userid = user.name
         
-        # if not 'summerschoolcseg219' in userid:
+        # if not 'diffusionstable877discord' in userid:
         #     print(f"Skipping user {userid} as it is a colab user")
         #     continue
         
         print(f"Using user ID: {userid}")
         # user_data_dir = Path(rf'{profile_dir}\{userid}')
-        browser = playwright.firefox.launch_persistent_context(str(user),headless=False,downloads_path=download_path)
+        browser = playwright.firefox.launch_persistent_context(str(user),headless=True,downloads_path=download_path)
         page = browser.new_page()
         page.set_default_timeout(60000 * 2)
         # breakpoint()
         page.goto("https://www.seaart.ai")
-
-        negative_replies_max_count = 5
+        # breakpoint()
+        # sleep(9000)
         for i in range(1):
             if not any(user.iterdir()):
                 print(f"User directory {user} is empty.")
@@ -340,6 +359,7 @@ def run(playwright: Playwright) -> None:
                 # breakpoint()
                 sleep(2)
                 # uploaded = page.locator(".image-box-mask").count()
+                
                 # breakpoint()
                 if int( page.locator(".number").first.inner_text()) > 90:
                     sel_img, prompt = get_random_image_and_prompt(image_dir)
@@ -366,18 +386,29 @@ def run(playwright: Playwright) -> None:
                     dta.fill(prompt)
                     # page.locator("#easyGenerateVideoInput").fill()
                     # page.locator("div.generate-btn:nth-child(4)").click()
-                    breakpoint()
+                    # with page.expect_request("**/api/v1/task/detail", timeout=180000) as response_info:
+                    # save_all_req_resp(page,f"seaart_{userid}_all_req_resp.log")
                     page.locator("div.generate-btn:nth-child(4)").click()
+                    # sleep(180)
+                    # response = response_info.value
+                    # response_path = respinse_save_dir / f"{userid}_response.json"
+                    # with open(response_path, "a+", encoding="utf-8") as f:
+                    #     try:
+                    #         resp_json = response.json()
+                    #     except Exception:
+                    #         resp_json = {"status": response.status, "url": response.url, "body": response.text()}
+                    #     json.dump(resp_json, f, ensure_ascii=False, indent=2)
+                    # print(f"Saved response info to {response_path}")
+                    download_videos(page)
                     # sleep(60)
                 # page.locator(".image-render-box").nth(0).hover()
-                elif int(page.locator("div.stamina:nth-child(1) > div:nth-child(2)").inner_html()) >= 8:
-                    # while int( page.locator(".number").first.inner_text()) >= 8:
+                
+                while int(page.locator("div.stamina:nth-child(1) > div:nth-child(2)").inner_html()) >= 10:
+                        generate_images(page)
                     # print("No image boxes found, possibly out of credits.")
-                    # breakpoint()
-                    generate_images(page)
+                    # breakpoint()  
                     # break
-                else:
-                    download_videos(page)
+                # else:
                 # breakpoint()
                 # raise Exception("This is a test exception to see if the error handling works")
                 sleep(3)
