@@ -1,9 +1,26 @@
 
 
+import itertools
 from pathlib import Path
 from random import choice
 from notSoRandV2 import random_line
+import threading
+import re
+def input_with_timeout(prompt, timeout, default):
+    user_input = [default]  # use list so inner function can modify it
 
+    def get_input():
+        user_input[0] = input(prompt) or default
+
+    t = threading.Thread(target=get_input)
+    t.daemon = True
+    t.start()
+    t.join(timeout)
+
+    if t.is_alive():  # time ran out
+        print(f"\n⏰ Time’s up! Using default: {default}")
+        return default
+    return user_input[0]
 
 def random_image_from_dir(image_dir):
     """Returns a random image file from the specified directory."""
@@ -17,22 +34,60 @@ def random_image_from_dir(image_dir):
 def get_random_image_and_prompt(dir):
     image_dir = Path(dir)
     sel_img = random_image_from_dir(image_dir)
-    prompt_file = sel_img.parent.with_suffix('.txt')
-    if sel_img.with_suffix('.txt').exists():
-        prompt_file = sel_img.with_suffix('.txt')
-    # prompt = prompt_file.read_text()
-    prompt = random_line(prompt_file)[0]
-    neg_prompt_file = image_dir / 'negative_prompts.neg.txt'
     if '6969' in str(sel_img).lower():
         print("Image is marked as don't use, skipping.")
         return get_random_image_and_prompt(dir)
+    # breakpoint()
+    prompt_file = sel_img.with_name(sel_img.parent.with_suffix('.txt').name)
+
+    if sel_img.with_suffix('.txt').exists():
+        prompt_file = sel_img.with_suffix('.txt')
+    if not prompt_file.is_file():
+        print(f'{prompt_file} does not exist')
+        return get_random_image_and_prompt(dir)
+    # prompt = prompt_file.read_text()
+    prompt = random_line(prompt_file)[0]
+    neg_prompt_file = image_dir / 'negative_prompts.neg.txt'
     if neg_prompt_file.exists():
         neg_prompts = [line.strip() for line in neg_prompt_file.read_text(encoding="utf-8").splitlines() if line.strip()]
         if prompt in neg_prompts:
             print("Prompt is present in negative prompts.")
+            neg_file = sel_img.parent / "negatives.txt"
+            with open(neg_file, "a", encoding="utf-8") as f:
+                f.write(prompt + "\n")
             return get_random_image_and_prompt(dir)
     return sel_img, prompt
 
+def seperate_sayings(dir):
+    dirs = Path(dir)
+    for d in dirs.iterdir():
+        if not d.is_dir()  or '6969' in str(d):
+            continue
+        # breakpoint()
+        common_prompt_file = d / d.with_suffix('.txt').name
+        if not common_prompt_file.is_file():
+            continue
+        # breakpoint()
+        content = common_prompt_file.read_text(encoding="utf-8")
+        sections = re.split(r'[,\;\.\n]', content)
+
+        for section in sections:
+            quotes = re.findall(r'(.*)["“”](.*?)["“”]', section)[0]
+            if quotes and len(quotes) == 2:
+                breakpoint()
+                fname = quotes[0].strip().replace(' ', '_')
+                out_file = d / f"{fname}.txt"
+                with open(out_file, "a", encoding="utf-8") as out_f:
+                    out_f.write(quotes[1])
+                # Replace the quotation in common_prompt_file with [<sub>_<con>]
+                # breakpoint()
+                new_section = re.sub(r'["“”](.*?)["“”]', f'[{fname}]', section)
+                content = content.replace(section, new_section)
+
+        with open(common_prompt_file, "a", encoding="utf-8") as f:
+            f.write(content)
+
+        
 
 def save_all_req_resp(page,filename):
     respinse_save_dir = Path(r"C:\dumpinGGrounds\reqresp") 
@@ -112,8 +167,11 @@ def annotate_negative_prompts_with_origin(neg_file_path, search_dir):
     neg_file.write_text('\n'.join(new_lines), encoding="utf-8")
 
 if __name__ == '__main__':
-    # img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan"
-    # sel_img, prompt = get_random_image_and_prompt(img_dir)
-    # print(sel_img)
-    # print(prompt)
-    annotate_negative_prompts_with_origin(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan\negative_prompts.neg.txt", r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan")
+    img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan"
+    sel_img, prompt = get_random_image_and_prompt(img_dir)
+    print(sel_img)
+    print(prompt)
+    # seperate_sayings(img_dir)
+    # annotate_negative_prompts_with_origin(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan\negative_prompts.neg.txt", r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan")
+    # value = input_with_timeout("Enter your name (10s timeout): ", 10, "Guest")
+    # print("Final value:", value)

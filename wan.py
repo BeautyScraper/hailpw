@@ -18,13 +18,16 @@ from os import listdir
 import os
 from os.path import isdir, join
 import requests
-from image_prompt import get_random_image_and_prompt
+from image_prompt import get_random_image_and_prompt,input_with_timeout
 from oldest_time import update_oldest_datetime
 
-update_prompt = True
-prompt_checking = True
-force_headless = False
+allow_rerun = False
+prompt_checking = False
+force_gui = False
 
+
+if prompt_checking:
+    force_gui=True
 def download_video(video_url, videoid, download_dir, filename):
     download_path = Path(download_dir) / filename
     records_file =  Path("downloaded_records.txt")
@@ -61,11 +64,11 @@ def download_files(page, name='wan'):
     match = re.search(r'userid=(\d+)', params)
     wanuserid = match.group(1) if match else None
     downloaded_something = False
-    for vdiv,prompt in zip(page.locator('div.infinite-scroll-component').locator('div[id*="__"]').all(), page.locator('span.prompt-tooltip+span.anticon[role="img"]').all()):
+    for vdiv,prompt in zip(page.locator('div.infinite-scroll-component').locator('div[id*="__"]').all(), page.locator('span.prompt-tooltip').all()):
         video_id = vdiv.get_attribute('id').split('__')[0]
         template_url = f"https://cdn.wanxai.com/wanx/{wanuserid}/image_to_video/{video_id}.mp4"
         # breakpoint()
-        filename = f"{video_id}_{name}_{wanuserid}_.mp4"
+        filename = f"{video_id}_{name}_{wanuserid}.mp4"
         x = download_video(template_url, video_id, download_dir, filename)
         if x:
             downloaded_something = True
@@ -73,15 +76,20 @@ def download_files(page, name='wan'):
             template_url2 = f"https://cdn.wanxai.com/wanx/{wanuserid}/video_extension/{video_id}.mp4"
             download_video(template_url2, video_id, download_dir, filename)
         if not Path(download_dir, filename).with_suffix('.txt').exists() and Path(download_dir, filename).exists():
-            message = ""
-            prompt.click(force=True)
-            while len(message) <=3:
-                message = pyperclip.paste() 
-                print(message)
-                sleep(1)
-
             # breakpoint()
+            page.locator('body').click()
+            prompt.hover()
+
+            # page.locator('span.prompt-tooltip').first.focus()
+            sleep(3)
+            # message =  page.locator('div.ant-tooltip-inner[role="tooltip"]').last.inner_text()
+            
+
+            # if len(message) <= 3 :
+            rt = prompt.inner_text()
+            message = page.locator('div', has_text=rt).last.inner_text()
             Path(download_dir, filename).with_suffix('.txt').write_text(message)
+            
     return downloaded_something
 
         
@@ -111,12 +119,12 @@ def generate_video(page, name):
         return
         
     # breakpoint()
-    retries = 100
+    retries = 10
     while page.locator('div', has_text='ust a moment').count() > 0 and retries > 0:
         retries -= 1
         print("wait for just a moment to finish")
         sleep(3)
-    if page.locator('div.infinite-scroll-component').locator('div[id*="__"]').nth(0).locator('video').count() == 0 and download_files(page,name) and  page.locator('button', has_text='Get Member').count() == 0 and not update_prompt:
+    if page.locator('div.infinite-scroll-component').locator('div[id*="__"]').nth(0).locator('video').count() == 0 and download_files(page,name) and  page.locator('button', has_text='Get Member').count() == 0 and allow_rerun:
         print('last one was porn')
         page.locator('button', has_text="rerun").first.click()
         try:
@@ -126,7 +134,8 @@ def generate_video(page, name):
         # return
         # download_files(page)
     if page.locator('button', has_text='Get Member').count() > 0  or page.locator('div', has_text='Estimated time').count() > 0 or page.locator('div', has_text='Just a moment').count() > 0:
-        return
+        if not prompt_checking:
+            return
     img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan"
     page.goto("https://create.wan.video/generate")
     sleep(5)
@@ -146,12 +155,15 @@ def generate_video(page, name):
     sleep(1)
     try:
         available_credits = int( page.locator("[data-test-id=\"header-popover-button-credit\"]").inner_text())
-        if available_credits < 1:
-            # print("Not enough credits to generate video.")
-            page.locator('div[data-test-id="creation-form-button-duration"]').click()
-            page.locator('div[data-test-id="creation-form-box-10"]').click() 
+        # breakpoint()
+        if available_credits >= 20:
+
+            page.locator('div[data-test-id="creation-form-button-model"]').click()
+            page.locator('div[data-test-id="creation-form-box-Wan2_5"]').click()
             page.locator('div[data-test-id="creation-form-button-resolution"]').click()
-            page.locator('div[data-test-id="creation-form-box-1920*1080"]').click()
+            page.locator('div[data-test-id="creation-form-box-1280*720"]').click()
+            page.locator('div[data-test-id="creation-form-button-duration"]').click()
+            page.locator('div[data-test-id="creation-form-box-10"]').click()
         elif available_credits >= 10:
 
             page.locator('div[data-test-id="creation-form-button-model"]').click()
@@ -161,6 +173,7 @@ def generate_video(page, name):
             page.locator('div[data-test-id="creation-form-button-duration"]').click()
             page.locator('div[data-test-id="creation-form-box-10"]').click()
             
+            
             # breakpoint()
         elif available_credits >= 5:
 
@@ -169,6 +182,12 @@ def generate_video(page, name):
             page.locator('div[data-test-id="creation-form-button-resolution"]').click()
             page.locator('div[data-test-id="creation-form-box-1280*720"]').click()
             # breakpoint()
+        elif available_credits < 1:
+            # print("Not enough credits to generate video.")
+            page.locator('div[data-test-id="creation-form-button-duration"]').click()
+            page.locator('div[data-test-id="creation-form-box-10"]').click() 
+            page.locator('div[data-test-id="creation-form-button-resolution"]').click()
+            page.locator('div[data-test-id="creation-form-box-1920*1080"]').click()
             # return
     except:
         pass
@@ -194,6 +213,7 @@ def generate_video(page, name):
             print(f"Error generating video: {response.json()['errorMsg']}")
             # breakpoint()
             # return
+    
     else:
         pass
         # breakpoint()
@@ -208,23 +228,26 @@ def generate_video(page, name):
     
 def claim_free_credits(page):
     # breakpoint()
+    # if int( page.locator("[data-test-id=\"header-popover-button-credit\"]").inner_text()) > 5:
+    #     return
     page.locator(".checkInGuidePopover").first.click()
     try:
         page.locator("button.ant-btn:nth-child(3)").click(timeout=2000)
     except:
         print("No free credits to claim.")
-    try:
-        page.locator(".ant-btn-sm").count() > 0 and page.locator(".ant-btn-sm").click(timeout=1000)
-    except:
-        print("No small button to click.")
+    # try:
+    #     page.locator(".ant-btn-sm").count() > 0 and page.locator(".ant-btn-sm").click(timeout=1000)
+    # except:
+    #     print("No small button to click.")
 
 
 
 def run(playwright: Playwright) -> None:
     userid = r'ash' 
     headless = True
-    if prompt_checking:
-        headless = False
+    global prompt_checking
+    # if prompt_checking:
+    #     headless = False
     profile_dir = r'C:\dumpinggrounds\browserprofileff'
     discord_dir = r"C:\dumpinGGrounds\ffprofilediscord"
     github = r"C:\dumpinGGrounds\ffgithub"
@@ -233,19 +256,36 @@ def run(playwright: Playwright) -> None:
     # profile_dirs = [profile_dir, discord_dir, github, tempmail]
     download_path = os.path.abspath("gemni_downloads")
     os.makedirs(download_path, exist_ok=True)
-    dirs = [x for x in itertools.chain( Path(profile_dir).iterdir(), Path(github).iterdir(), Path(discord_dir).iterdir(), Path(tempmail).iterdir()) if x.is_dir()]
-    # dirs = [x for x in itertools.chain( Path(cellular).iterdir()) if x.is_dir()]
+    # dirs = [x for x in itertools.chain( Path(profile_dir).iterdir(), Path(github).iterdir()) if x.is_dir()]
+    # dirs = [x for x in itertools.chain( Path(profile_dir).iterdir(), Path(github).iterdir(), Path(discord_dir).iterdir(), Path(tempmail).iterdir()) if x.is_dir()]
+    dirs = [x for x in itertools.chain( Path(cellular).iterdir()) if x.is_dir()]
     shuffle(dirs)
     exclude_user = []
-    if prompt_checking:
-        headless = True
+    exclude_user_file = Path("exclude_user.txt")
+    # if prompt_checking:
+    #     headless = True
+    ip = input_with_timeout("Select 1 \n1. GUI ON \n2. Stop before submission \n3. Delete excluding file \n4. stop at login screen\ninput:", 20,"n").lower()
+    if '1' in ip:
+        headless = False
+    if '2' in ip:
+        prompt_checking = True
+    if  '3' in ip:
+        exclude_user_file.unlink()
+    if '4' in ip:
+        stop_at_login = True
+    else:
+        stop_at_login = False
     while True:
-        exclude_user_file = Path("exclude_user.txt")
         if exclude_user_file.exists():
             with exclude_user_file.open("r", encoding="utf-8") as f:
                 exclude_user = [line.strip() for line in f if line.strip()]
+            # dirs = [d for d in dirs if f'{d.parent}\\{d.name}' not in exclude_user]
+            dirs = [d for d in dirs if str(d) not in exclude_user]
+            # breakpoint()
+            if len(dirs) < 1:
+                break
         for user in tqdm.tqdm(dirs):
-            print(f'{user.parent}\\{user.name}')
+            # print(f'{user.parent}\\{user.name}')
             if not user.is_dir():
                 continue
             
@@ -254,24 +294,27 @@ def run(playwright: Playwright) -> None:
             # if  'ffgithub' not in str(user) or 'temp' not in str(user):
             # if not 'browserprofileff\sstico1'  in str(user):
             #     continue
-            # if not 'sstico1'  in str(user):
+            # if not 'cell_ghost9'  in str(user):
             #     continue
             if f'{user.parent}\\{user.name}' in exclude_user:
 
                 continue
-
-            browser = playwright.firefox.launch_persistent_context(str(user),headless=headless or force_headless,downloads_path=download_path)
+            if force_gui:
+                headless = False
+            browser = playwright.firefox.launch_persistent_context(str(user),headless=headless,downloads_path=download_path)
             # user_data_dir = Path(rf'{profile_dir}\{userid}')
             page = browser.new_page()
             page.set_default_timeout(30000)
             page.goto("https://create.wan.video/generate")
-            # breakpoint()
+            if stop_at_login:
+                breakpoint()
             sleep(3)
-            if page.locator('button', has_text='Get Member').count() > 0:
+            if page.locator('button', has_text='Get Member').count() > 0 and not prompt_checking:
                 print(f'excluded_{user.parent}\\{user.name}')
                 exclude_user.append(f'{user.parent}\\{user.name}')
                 with exclude_user_file.open("a", encoding="utf-8") as f:
                     f.write(f'{user.parent}\\{user.name}\n')
+                    # f.flush()
             # sleep(500)
             # browser.close()
             # continue
@@ -284,9 +327,10 @@ def run(playwright: Playwright) -> None:
             update_oldest_datetime([x.inner_text() for x  in page.locator('span', has_text="2025").all()[:1]])
             
             browser.close()
-        if len(dirs) - len(exclude_user) < 1:
-            break
-        for i in range(2,0,-1):
+        wait_for = 1
+        if len(dirs) <= 7:
+            wait_for = 7
+        for i in range(wait_for,0,-1):
             sleep( 60)
             print(f'{i} \n',end='',flush=True)
         # continue

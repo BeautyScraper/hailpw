@@ -313,7 +313,7 @@ def run(playwright: Playwright) -> None:
         
         print(f"Using user ID: {userid}")
         # user_data_dir = Path(rf'{profile_dir}\{userid}')
-        browser = playwright.firefox.launch_persistent_context(str(user),headless=True,downloads_path=download_path)
+        browser = playwright.firefox.launch_persistent_context(str(user),headless=False,downloads_path=download_path)
         page = browser.new_page()
         page.set_default_timeout(60000 * 2)
         # breakpoint()
@@ -347,8 +347,8 @@ def run(playwright: Playwright) -> None:
                     print("Could not click gift button, possibly out of credits.")
                     # breakpoint()
                     # break
-                sleep(2)
-                # breakpoint()
+                # sleep(2)
+                breakpoint()
                 # page.locator(".claim-button").first.click()
                 if page.locator(".claim-button").count() < 1:
                     print("No claim button found, possibly out of credits.")
@@ -361,7 +361,7 @@ def run(playwright: Playwright) -> None:
                 # uploaded = page.locator(".image-box-mask").count()
                 
                 # breakpoint()
-                if int( page.locator(".number").first.inner_text()) > 90:
+                if int( page.locator(".number").first.inner_text()) > 90 and False:
                     sel_img, prompt = get_random_image_and_prompt(image_dir)
                     sleep(2)
                     first = True
@@ -399,12 +399,12 @@ def run(playwright: Playwright) -> None:
                     #         resp_json = {"status": response.status, "url": response.url, "body": response.text()}
                     #     json.dump(resp_json, f, ensure_ascii=False, indent=2)
                     # print(f"Saved response info to {response_path}")
-                    download_videos(page)
                     # sleep(60)
                 # page.locator(".image-render-box").nth(0).hover()
                 
                 while int(page.locator("div.stamina:nth-child(1) > div:nth-child(2)").inner_html()) >= 10:
                         generate_images(page)
+                download_videos(page)
                     # print("No image boxes found, possibly out of credits.")
                     # breakpoint()  
                     # break

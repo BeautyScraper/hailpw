@@ -432,12 +432,31 @@ def run(playwright: Playwright) -> None:
                 # breakpoint()
                 # page.locator(".ql-editor").click()
                 total_img_replys = page.locator(".image-button").count()
+                # with page.expect_response("**/_/BardChatUi/data/assistant.lamda.BardFrontendService/**",timeout=50000) as response_info:
+                #     page.locator(".send-button").first.click()
+                #     # page.goto("https://example.com") # Replace with a page that triggers the API call
+                
+                # response = response_info.value
+                
+                # # Check if the response is successful
+                # if response.ok:
+                #     breakpoint()
+                #     if 'googleusercontent.com' in response.body().decode("utf-8"):
+                #         breakpoint()
+                #     # json_body = response.json()
+                #     # print("JSON Response Body:")
+                #     # print(json_body)
+                # else:
+                #     print(f"Request failed with status: {response.status}")
+    
                 try:
                     page.locator(".send-button").first.click()
                 except Exception as e:
                     click_middle_of_window(page)
                     print(f"Error clicking .ql-editor: {e}")
                     page.locator(".send-button").first.click()
+
+
                 # try:
                 # except Exception as e:
                 #     print(f"Error clicking send button: {e}")

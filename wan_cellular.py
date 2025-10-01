@@ -237,12 +237,13 @@ def run(playwright: Playwright) -> None:
         page.goto("https://create.wan.video/generate")
         register(browser, page)
         breakpoint()
-        # sleep(500)
-        # browser.close()
-        # continue
+        claim_free_credits(page)
+        sleep(5)
+
+        browser.close()
+        continue
         # if 'ffprofilediscord' in str(user):
         # sleep(9000)
-        claim_free_credits(page)
         generate_video(page, userid)
         download_files(page)
 
