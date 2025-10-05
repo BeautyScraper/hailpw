@@ -347,8 +347,8 @@ def run(playwright: Playwright) -> None:
                     print("Could not click gift button, possibly out of credits.")
                     # breakpoint()
                     # break
-                # sleep(2)
-                breakpoint()
+                sleep(2)
+                # breakpoint()
                 # page.locator(".claim-button").first.click()
                 if page.locator(".claim-button").count() < 1:
                     print("No claim button found, possibly out of credits.")

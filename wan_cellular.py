@@ -177,7 +177,11 @@ def register(browser, page):
         page2.locator('button', has_text='Copy').click()
         pwd = 'c6556Bhg47w5PYCv'
         usrname = f'ghtyrt{randint(100, 999)}' 
-        page.locator('span', has_text='Sign up').click()
+        try:
+            page.locator('span', has_text='Sign up').click()
+        except:
+            print("Failed to click 'Sign up' button.")
+            raise Exception("Failed to click 'Sign up' button.")
         f = page.locator('div.ant-form-item.ant-form-item-vertical').locator('.ant-input') 
         f.nth(0).fill(usrname)
         f.nth(1).focus()
@@ -209,7 +213,8 @@ def run(playwright: Playwright) -> None:
     discord_dir = r"C:\dumpinGGrounds\ffprofilediscord"
     github = r"C:\dumpinGGrounds\ffgithub"
     tempmail = r"C:\dumpinGGrounds\tempmailsffprofile"
-    cellular = r"C:\dumpinGGrounds\ffcellular"
+    # cellular = r"C:\dumpinGGrounds\ffptemp2"
+    cellular = r"C:\dumpinGGrounds\ffptemp4"
     # profile_dirs = [profile_dir, discord_dir, github, tempmail]
     download_path = os.path.abspath("gemni_downloads")
     os.makedirs(download_path, exist_ok=True)
@@ -235,10 +240,16 @@ def run(playwright: Playwright) -> None:
         page = browser.new_page()
         page.set_default_timeout(120000)
         page.goto("https://create.wan.video/generate")
-        register(browser, page)
-        breakpoint()
+        try:
+            register(browser, page)
+        except:
+            continue
+        # breakpoint()
+        sleep(3)
+        if page.locator('button.ant-modal-close[aria-label="Close"]').count() > 0:
+            page.locator('button.ant-modal-close[aria-label="Close"]').click()
         claim_free_credits(page)
-        sleep(5)
+        # sleep(5)
 
         browser.close()
         continue

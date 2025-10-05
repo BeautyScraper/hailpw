@@ -2,10 +2,140 @@
 
 import itertools
 from pathlib import Path
+import queue
 from random import choice
 from notSoRandV2 import random_line
 import threading
 import re
+import time
+import pandas as pd
+import subprocess
+import sys
+
+csv_file =  Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan\genvideo_details.csv") #the csv file has these column user	sel_image	prompt	nsfw	success	httpCode	errorCode	data	requestId	failed	traceId
+
+def run_command_with_timeout(cmd, timeout):
+    """
+    Runs a command and displays output in real-time.
+    Kills the process if it exceeds the timeout.
+    Timeout is in seconds (can be fractional).
+    """
+    try:
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            shell=isinstance(cmd, str)  # True if cmd is a string
+        )
+
+        q = queue.Queue()
+
+        def enqueue_output(out, queue):
+            for line in iter(out.readline, ''):
+                queue.put(line)
+            out.close()
+
+        t = threading.Thread(target=enqueue_output, args=(process.stdout, q))
+        t.daemon = True
+        t.start()
+
+        start = time.time()
+        timed_out = False
+
+        while True:
+            try:
+                line = q.get_nowait()
+            except queue.Empty:
+                pass
+            else:
+                print(line, end="")  # Print real-time output
+
+            if process.poll() is not None:  # process finished
+                break
+
+            if time.time() - start > timeout:  # timeout check
+                timed_out = True
+                process.terminate()
+                try:
+                    process.wait(2)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                print("\nProcess killed after timeout")
+                break
+
+            time.sleep(0.1)  # prevent busy loop
+
+        return process.returncode, timed_out
+
+    except Exception as e:
+        print("Error:", e)
+        return -1, True
+
+def save_response_to_csv(response, name, sel_img, prompt):
+    """
+    Saves the response data along with user information, selected image, and prompt to a CSV file.
+
+    Parameters:
+        response: The response object with a .json() method containing additional data.
+        name (str): The name of the user.
+        sel_img (str or Path): The path to the selected image.
+        prompt (str): The prompt associated with the image.
+
+    The function creates or appends to 'genvideo_details.csv' in the image's parent directory.
+    """
+    # csv_file = Path(csv_file)
+    data = {
+        "user": name,
+        "sel_image": str(sel_img),
+        "prompt": prompt,
+        "nsfw": "NA",
+        **response.json()
+    }
+    df = pd.DataFrame([data])
+    if csv_file.exists():
+        df.to_csv(csv_file, mode='a', header=False, index=False, encoding="utf-8")
+    else:
+        df.to_csv(csv_file, mode='w', header=True, index=False, encoding="utf-8")
+
+def get_info_by_data_column( data):
+    """
+    Fetches rows from the CSV file where the 'data' column matches the given value.
+
+    Parameters:
+        data: The value to match in the 'data' column.
+
+    Returns:
+        pandas.DataFrame: DataFrame containing matching rows, or empty DataFrame if none found.
+    """
+    df = pd.read_csv(csv_file, encoding="utf-8")
+    if 'data' not in df.columns:
+        print("'data' column not found in CSV.")
+        return pd.DataFrame()
+    return df[df['data'] == data]
+
+def update_nsfw(data, is_nsfw):
+    """
+    Updates the 'nsfw' column for rows where the 'data' column matches the given value.
+
+    Parameters:
+        data: The value to match in the 'data' column.
+        is_nsfw: The value to set in the 'nsfw' column.
+    """
+    df = pd.read_csv(csv_file, encoding="utf-8")
+    if 'data' not in df.columns or 'nsfw' not in df.columns:
+        print("Required columns not found in CSV.")
+        return
+    df.loc[df['data'] == data, 'nsfw'] = is_nsfw
+    df.to_csv(csv_file, index=False, encoding="utf-8")
+
+def notify_sleep(seconds):
+    for i in range(1, seconds + 1, 5):
+        time.sleep(5)
+        print(f"\r{int(i/seconds*100)}%", end="", flush=True)
+    print("Done waiting!")
+
 def input_with_timeout(prompt, timeout, default):
     user_input = [default]  # use list so inner function can modify it
 
@@ -38,7 +168,10 @@ def get_random_image_and_prompt(dir):
         print("Image is marked as don't use, skipping.")
         return get_random_image_and_prompt(dir)
     # breakpoint()
-    prompt_file = sel_img.with_name(sel_img.parent.with_suffix('.txt').name)
+     
+    prompt_file = sel_img.with_name(sel_img.parent.with_suffix('.txt').name) 
+    if not prompt_file.is_file():
+        prompt_file = sel_img.parent / 'start.txt'
 
     if sel_img.with_suffix('.txt').exists():
         prompt_file = sel_img.with_suffix('.txt')
@@ -47,15 +180,20 @@ def get_random_image_and_prompt(dir):
         return get_random_image_and_prompt(dir)
     # prompt = prompt_file.read_text()
     prompt = random_line(prompt_file)[0]
+    # if "pyaari" in prompt:
+    #     breakpoint()
     neg_prompt_file = image_dir / 'negative_prompts.neg.txt'
     if neg_prompt_file.exists():
         neg_prompts = [line.strip() for line in neg_prompt_file.read_text(encoding="utf-8").splitlines() if line.strip()]
+        # breakpoint()
         if prompt in neg_prompts:
             print("Prompt is present in negative prompts.")
             neg_file = sel_img.parent / "negatives.txt"
             with open(neg_file, "a", encoding="utf-8") as f:
                 f.write(prompt + "\n")
             return get_random_image_and_prompt(dir)
+    else:
+        breakpoint()
     return sel_img, prompt
 
 def seperate_sayings(dir):
@@ -166,12 +304,91 @@ def annotate_negative_prompts_with_origin(neg_file_path, search_dir):
     new_lines = annotate_lines_with_origins(neg_lines, origin_map)
     neg_file.write_text('\n'.join(new_lines), encoding="utf-8")
 
+def calculate_nsfw_chances_safe(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate the probability of each file being NSFW, safely handling zero counts.
+
+    Args:
+        df (pd.DataFrame): DataFrame with columns 'sel_image' and 'nsfw'.
+
+    Returns:
+        pd.DataFrame: A DataFrame with file, total count, nsfw count, and nsfw probability.
+    """
+    # Group by file and calculate stats
+    result = (
+        df.groupby("sel_image")["nsfw"]
+        .agg(
+            total="count",
+            nsfw_count="sum"
+        )
+        .reset_index()
+    )
+    # Safely add probability column (avoid division by zero)
+    result["nsfw_probability"] = result.apply(
+        lambda row: row["nsfw_count"] / row["total"] if row["total"] > 0 else 0, axis=1
+    )
+    return result
+
+def export_nsfw_reports(df: pd.DataFrame, output_suffix="_nsfw_report.csv"):
+    """
+    For each sel_image, create a CSV in that file's directory containing 
+    prompt-level stats and one extra column with the overall file probability.
+
+    Args:
+        df (pd.DataFrame): DataFrame with 'sel_image', 'prompt', and 'nsfw' columns.
+        output_suffix (str): Suffix to append for the report file.
+    """
+    grouped_files = df.groupby("sel_image")
+    
+    for file, group in grouped_files:
+        file_path = Path(file)
+
+        # --- Per-prompt aggregation ---
+        prompt_stats = (
+            group.groupby("prompt")["nsfw"]
+            .agg(total_count="count", nsfw_count="sum")
+            .reset_index()
+        )
+
+        # Safe division for prompt-level probability
+        prompt_stats["nsfw_probability"] = prompt_stats.apply(
+            lambda row: row["nsfw_count"] / row["total_count"] if row["total_count"] > 0 else 0,
+            axis=1
+        )
+
+        # --- Overall probability for this file ---
+        total = len(group)
+        nsfw_count = group["nsfw"].sum()
+        file_nsfw_prob = nsfw_count / total if total > 0 else 0
+
+        # Add as a constant column for all rows
+        prompt_stats["overall_file_nsfw_probability"] = file_nsfw_prob
+
+        # --- Output path ---
+        file_dir = file_path.parent
+        base_name = file_path.stem
+        out_path = file_dir / f"{base_name}{output_suffix}"
+
+        # Ensure directory exists
+        file_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save CSV
+        prompt_stats.to_csv(out_path, index=False)
+
+    print("Reports created successfully.")
+
 if __name__ == '__main__':
-    img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan"
-    sel_img, prompt = get_random_image_and_prompt(img_dir)
-    print(sel_img)
-    print(prompt)
+    # img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan"
+    # for i in range(10000):
+    #     sel_img, prompt = get_random_image_and_prompt(img_dir)
+    #     print(sel_img)
+    #     print(prompt)
     # seperate_sayings(img_dir)
+    df1 = pd.read_csv(csv_file, encoding="utf-8")
+    # nsfw_stats_safe = calculate_nsfw_chances_safe(df1)
+    # nsfw_stats_safe.to_csv(csv_file.parent / 'results.csv')
+    export_nsfw_reports(df1)
+    # breakpoint()
     # annotate_negative_prompts_with_origin(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan\negative_prompts.neg.txt", r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan")
     # value = input_with_timeout("Enter your name (10s timeout): ", 10, "Guest")
     # print("Final value:", value)

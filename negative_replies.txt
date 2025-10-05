@@ -12,6 +12,7 @@ against my guidelines
 not able to generate an image
 I couldn't generate the image
 not able to generate
+Sorry, something went wrong. 
 What kind of image would you like to generate
 unable to create
 I cannot
