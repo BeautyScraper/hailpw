@@ -197,9 +197,9 @@ def generate_video(page, name):
         # download_files(page)
     # return
     if page.locator('button', has_text='Get Member').count() > 0  or page.locator('div', has_text='Estimated time').count() > 0 or page.locator('div', has_text='Just a moment').count() > 0:
-        if not prompt_checking:
-            return
-    img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan"
+        # if not prompt_checking:
+        return
+    img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan3"
     page.goto("https://create.wan.video/generate")
     sleep(5)
     sel_img, prompt = get_random_image_and_prompt(img_dir)
@@ -313,17 +313,16 @@ def run(playwright: Playwright) -> None:
     #     headless = False
     dirs_paths = [ 
      r"C:\dumpinGGrounds\ffcellular",
+    #  r"C:\dumpinGGrounds\ffptemp2",
+    #  r"C:\dumpinGGrounds\ffptemp3",
      r"C:\dumpinGGrounds\ffptemp4",
-     r"C:\dumpinGGrounds\ffprofilediscord",
+    #  r"C:\dumpinGGrounds\ffgithub",
+    #  r"C:\dumpinGGrounds\tempmailsffprofile",
+    #  r"C:\dumpinGGrounds\ffprofilediscord",
+    #  r'C:\dumpinggrounds\browserprofileff',
      ]
     #     headless = False
     # dirs_paths = [ 
-    #  r"C:\dumpinGGrounds\ffcellular",
-    #  r"C:\dumpinGGrounds\ffgithub",
-    #  r"C:\dumpinGGrounds\ffptemp2",
-    #  r"C:\dumpinGGrounds\ffptemp3",
-    #  r'C:\dumpinggrounds\browserprofileff',
-    #  r"C:\dumpinGGrounds\tempmailsffprofile"
     # ]
 
     # profile_dirs = [profile_dir, discord_dir, github, tempmail]
@@ -438,12 +437,13 @@ def run(playwright: Playwright) -> None:
             # sleep(500)
             # browser.close()
             # continue
+            
             # if 'ffprofilediscord' in str(user):
             # sleep(9000)
             claim_free_credits(page)
             generate_video(page, userid)
             # download_files(page)
-
+            # breakpoint()
             update_oldest_datetime([x.inner_text() for x  in page.locator('span', has_text="2025").all()[:1]])
             
             browser.close()

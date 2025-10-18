@@ -12,7 +12,7 @@ import pandas as pd
 import subprocess
 import sys
 
-csv_file =  Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan\genvideo_details.csv") #the csv file has these column user	sel_image	prompt	nsfw	success	httpCode	errorCode	data	requestId	failed	traceId
+csv_file =  Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan3\genvideo_details.csv") #the csv file has these column user	sel_image	prompt	nsfw	success	httpCode	errorCode	data	requestId	failed	traceId
 
 def run_command_with_timeout(cmd, timeout):
     """
@@ -193,7 +193,8 @@ def get_random_image_and_prompt(dir):
                 f.write(prompt + "\n")
             return get_random_image_and_prompt(dir)
     else:
-        breakpoint()
+        pass
+        # breakpoint()
     return sel_img, prompt
 
 def seperate_sayings(dir):
@@ -378,16 +379,17 @@ def export_nsfw_reports(df: pd.DataFrame, output_suffix="_nsfw_report.csv"):
     print("Reports created successfully.")
 
 if __name__ == '__main__':
-    # img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan"
-    # for i in range(10000):
-    #     sel_img, prompt = get_random_image_and_prompt(img_dir)
-    #     print(sel_img)
-    #     print(prompt)
+    img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan3"
+    for i in range(10000):
+        sel_img, prompt = get_random_image_and_prompt(img_dir)
+        print(sel_img)
+        print(prompt)
+        breakpoint()
     # seperate_sayings(img_dir)
-    df1 = pd.read_csv(csv_file, encoding="utf-8")
+    # df1 = pd.read_csv(csv_file, encoding="utf-8")
     # nsfw_stats_safe = calculate_nsfw_chances_safe(df1)
     # nsfw_stats_safe.to_csv(csv_file.parent / 'results.csv')
-    export_nsfw_reports(df1)
+    # export_nsfw_reports(df1)
     # breakpoint()
     # annotate_negative_prompts_with_origin(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan\negative_prompts.neg.txt", r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan")
     # value = input_with_timeout("Enter your name (10s timeout): ", 10, "Guest")

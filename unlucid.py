@@ -262,7 +262,7 @@ def run(playwright: Playwright) -> None:
         
         print(f"Using user ID: {userid}")
         # user_data_dir = Path(rf'{profile_dir}\{userid}')
-        browser = playwright.firefox.launch_persistent_context(str(user),headless=False,downloads_path=download_path)
+        browser = playwright.firefox.launch_persistent_context(str(user),headless=True,downloads_path=download_path)
         page = browser.new_page()
         page.set_default_timeout(30000)
         page.goto("https://unlucid.ai/gems")
@@ -277,14 +277,14 @@ def run(playwright: Playwright) -> None:
         except:
             print("No more tokens.")
 
-        # breakpoint()
 
-        # sleep(2)
+        sleep(2)
         # if  int(page.locator(".counter").inner_text()) >= 15:
         #     create_video(page)
         # if  int(page.locator(".counter").inner_text()) >= 5:
         #     create_image(page)
         # download_images(page)
+        # breakpoint()
         browser.close()
         continue
        
