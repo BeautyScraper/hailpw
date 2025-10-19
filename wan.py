@@ -14,18 +14,18 @@ import pyperclip
 
 import tqdm
 from user_id import userids , img_dir
-from notSoRand import random_line
 from os import listdir
 import os
 from os.path import isdir, join
 import requests
-from image_prompt import get_info_by_data_column, get_random_image_and_prompt,input_with_timeout, notify_sleep, run_command_with_timeout, save_response_to_csv, update_nsfw
+from image_prompt import get_info_by_data_column, get_random_image_and_prompt,input_with_timeout, negative_image_found, notify_sleep, run_command_with_timeout, save_response_to_csv, update_nsfw
 from oldest_time import update_oldest_datetime
 import csv
 
 allow_rerun = False
 prompt_checking = False
 force_gui = False
+max_negative = 5
 
 
 if prompt_checking:
@@ -143,13 +143,16 @@ def handle_image_generation(page, sel_img, img_dir, prompt, name):
 
     response = response_info.value
     resp_json = response.json()
-
+    global max_negative
     if 'errorMsg' in resp_json:
         error = resp_json['errorMsg']
-
+        max_negative = max_negative - 1
+        if max_negative <= 0:
+            max_negative = 5
+            return False
         if 'Please try a different image' in error:
             print("Image rejected, skipping.")
-            sel_img.unlink()
+            negative_image_found(sel_img)
 
         elif 'prompt' in error:
             print("Negative prompt")
@@ -168,6 +171,7 @@ def handle_image_generation(page, sel_img, img_dir, prompt, name):
     else:
         print("success")
         save_response_to_csv(response, name, sel_img, prompt)
+    return True
 
 
 def generate_video(page, name):
@@ -261,7 +265,9 @@ def generate_video(page, name):
     sleep(3)
     for _ in range(3):
         try:
-            handle_image_generation(page, sel_img, img_dir, prompt, name)
+            status = handle_image_generation(page, sel_img, img_dir, prompt, name)
+            if not status:
+                return
         except Exception as e:
             print(f'exception generated {e}')
             continue
@@ -312,12 +318,12 @@ def run(playwright: Playwright) -> None:
     # if prompt_checking:
     #     headless = False
     dirs_paths = [ 
-     r"C:\dumpinGGrounds\ffcellular",
-    #  r"C:\dumpinGGrounds\ffptemp2",
-    #  r"C:\dumpinGGrounds\ffptemp3",
-     r"C:\dumpinGGrounds\ffptemp4",
-    #  r"C:\dumpinGGrounds\ffgithub",
-    #  r"C:\dumpinGGrounds\tempmailsffprofile",
+    #  r"C:\dumpinGGrounds\ffcellular",
+     r"C:\dumpinGGrounds\ffptemp2",
+     r"C:\dumpinGGrounds\ffptemp3",
+    #  r"C:\dumpinGGrounds\ffptemp4",
+     r"C:\dumpinGGrounds\ffgithub",
+     r"C:\dumpinGGrounds\tempmailsffprofile",
     #  r"C:\dumpinGGrounds\ffprofilediscord",
     #  r'C:\dumpinggrounds\browserprofileff',
      ]

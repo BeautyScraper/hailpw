@@ -4,7 +4,8 @@ import itertools
 from pathlib import Path
 import queue
 from random import choice
-from notSoRandV2 import random_line
+import shutil
+from story_weaver import RandomTextGenerator
 import threading
 import re
 import time
@@ -12,7 +13,12 @@ import pandas as pd
 import subprocess
 import sys
 
+
+
 csv_file =  Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan3\genvideo_details.csv") #the csv file has these column user	sel_image	prompt	nsfw	success	httpCode	errorCode	data	requestId	failed	traceId
+ignore_if_found_negative = True
+delete_negative_img = False
+move_image = True
 
 def run_command_with_timeout(cmd, timeout):
     """
@@ -130,6 +136,30 @@ def update_nsfw(data, is_nsfw):
     df.loc[df['data'] == data, 'nsfw'] = is_nsfw
     df.to_csv(csv_file, index=False, encoding="utf-8")
 
+def move_to_negative_dir(img_path: Path):
+    # Create the "negative_images" directory inside the same parent
+    negative_dir = img_path.parent / "negative_images6969"
+    negative_dir.mkdir(exist_ok=True)
+
+    # Destination path
+    new_path = negative_dir / img_path.name
+
+    # Move only if the file doesn't already exist
+    if not new_path.exists():
+        shutil.move(str(img_path), str(new_path))
+        print(f"Moved to: {new_path}")
+    else:
+        print(f"File already exists at: {new_path}")
+
+    return new_path
+
+
+def negative_image_found(img_path):
+    if move_image:
+        move_to_negative_dir(img_path)
+    if delete_negative_img:
+        img_path.unlink()
+
 def notify_sleep(seconds):
     for i in range(1, seconds + 1, 5):
         time.sleep(5)
@@ -179,14 +209,15 @@ def get_random_image_and_prompt(dir):
         print(f'{prompt_file} does not exist')
         return get_random_image_and_prompt(dir)
     # prompt = prompt_file.read_text()
-    prompt = random_line(prompt_file)[0]
+    generator = RandomTextGenerator("files")
+    prompt = generator.get_random_line(prompt_file)[0]
     # if "pyaari" in prompt:
     #     breakpoint()
     neg_prompt_file = image_dir / 'negative_prompts.neg.txt'
     if neg_prompt_file.exists():
         neg_prompts = [line.strip() for line in neg_prompt_file.read_text(encoding="utf-8").splitlines() if line.strip()]
         # breakpoint()
-        if prompt in neg_prompts:
+        if prompt in neg_prompts and ignore_if_found_negative:
             print("Prompt is present in negative prompts.")
             neg_file = sel_img.parent / "negatives.txt"
             with open(neg_file, "a", encoding="utf-8") as f:
