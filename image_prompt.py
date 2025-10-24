@@ -12,13 +12,51 @@ import time
 import pandas as pd
 import subprocess
 import sys
-
+import os
+import json
+from datetime import datetime, timedelta
 
 
 csv_file =  Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan3\genvideo_details.csv") #the csv file has these column user	sel_image	prompt	nsfw	success	httpCode	errorCode	data	requestId	failed	traceId
+record_dir = Path(r"C:\dumpinGGrounds\wait_duration")
 ignore_if_found_negative = True
 delete_negative_img = False
 move_image = True
+
+
+def store_timestamp(duration_minutes, filename="time_data.json"):
+    """
+    Stores the current timestamp and duration (in minutes) to a file.
+    """
+    data = {
+        "timestamp": datetime.now().isoformat(),
+        "duration_minutes": duration_minutes
+    }
+    filepath = record_dir / filename
+    with open(filepath, "w") as f:
+        json.dump(data, f)
+
+
+def is_duration_passed(filename="time_data.json"):
+    """
+    Returns True if duration has passed since stored timestamp, else False.
+    If file not found, it will return True (no prior data available).
+    """
+    filepath = record_dir / filename
+    if not os.path.exists(filepath):
+        return True  # no previous record means allowed to run
+
+    with open(filepath, "r") as f:
+        data = json.load(f)
+
+    last_time = datetime.fromisoformat(data["timestamp"])
+    duration_minutes = data["duration_minutes"]
+    now = datetime.now()
+
+    if now - last_time >= timedelta(minutes=duration_minutes):
+        return True
+    else:
+        return False
 
 def run_command_with_timeout(cmd, timeout):
     """
@@ -184,7 +222,8 @@ def input_with_timeout(prompt, timeout, default):
 
 def random_image_from_dir(image_dir):
     """Returns a random image file from the specified directory."""
-    images = [x for x in image_dir.rglob('*.*') if x.is_file() and x.suffix.lower() in ['.png', '.jpg', '.jpeg'] and '6969' not in str(x)]
+    img_dirs = [x for x in image_dir.iterdir() if x.is_dir() and '6969' not in str(x) and any(x.suffix.lower() in ['.png', '.jpg', '.jpeg'] for x in x.iterdir() if x.is_file())]
+    images = [x for x in choice(img_dirs).rglob('*.*') if x.is_file() and x.suffix.lower() in ['.png', '.jpg', '.jpeg'] and '6969' not in str(x)]
     if not images:
         print("No images found in the directory.")
         breakpoint()
@@ -306,6 +345,13 @@ def build_origin_map(neg_lines, txt_files):
             if line in neg_lines:
                 origin_map.setdefault(line, []).append(txt_file.name)
     return origin_map
+
+def open_target_dir_in_explorer(dir):
+    """
+    Opens the target directory in the file explorer.
+    """
+    print(f"Opening directory: {dir}")
+    os.system(f'start "" {dir}')
 
 def annotate_lines_with_origins(neg_lines, origin_map):
     """Append '@@filename' to each negative prompt line if an origin is found."""

@@ -3,6 +3,7 @@ import profile
 from random import choice, shuffle
 import random
 import shutil
+import keyboard
 import pandas as pd
 from playwright.sync_api import Playwright, sync_playwright, expect
 from pathlib import Path
@@ -13,19 +14,19 @@ import json
 import pyperclip
 
 import tqdm
-from user_id import userids , img_dir
+# from user_id import userids , img_dir
 from os import listdir
 import os
 from os.path import isdir, join
 import requests
-from image_prompt import get_info_by_data_column, get_random_image_and_prompt,input_with_timeout, negative_image_found, notify_sleep, run_command_with_timeout, save_response_to_csv, update_nsfw
+from image_prompt import get_info_by_data_column, get_random_image_and_prompt,input_with_timeout, negative_image_found, notify_sleep, open_target_dir_in_explorer, run_command_with_timeout, save_response_to_csv, update_nsfw
 from oldest_time import update_oldest_datetime
 import csv
 
 allow_rerun = False
 prompt_checking = False
 force_gui = False
-max_negative = 5
+max_negative = 50
 
 
 if prompt_checking:
@@ -125,7 +126,7 @@ def infinite_video(page):
         print("wait for just a moment to finish")
         sleep(20)
 
-def handle_image_generation(page, sel_img, img_dir, prompt, name):
+def handle_image_generation(page, sel_img, prompt, name):
     """
     Handles the image generation request, response validation, 
     and error handling for image generation.
@@ -133,12 +134,11 @@ def handle_image_generation(page, sel_img, img_dir, prompt, name):
     Args:
         page: Playwright page object
         sel_img (Path): Selected image path
-        img_dir (Path): Directory where images are stored
         prompt (str): The prompt used for image generation
         name (str): Identifier for saving response
     """
 
-    with page.expect_response("**/api/common/imageGen") as response_info:
+    with page.expect_response("**/api/common/imageGen",timeout=10000) as response_info:
         page.locator('div[data-test-id="creation-form-button-submit"]').click()
 
     response = response_info.value
@@ -148,15 +148,19 @@ def handle_image_generation(page, sel_img, img_dir, prompt, name):
         error = resp_json['errorMsg']
         max_negative = max_negative - 1
         if max_negative <= 0:
-            max_negative = 5
+            max_negative = 50
             return False
         if 'Please try a different image' in error:
+            pos_prompt_file = Path(sel_img.parent, 'positive_prompts').with_suffix('.txt')
+            with open(pos_prompt_file, "a+", encoding="utf-8") as f:
+                f.write(prompt + "\n")
             print("Image rejected, skipping.")
             negative_image_found(sel_img)
 
         elif 'prompt' in error:
-            print("Negative prompt")
-            neg_prompt_file = Path(img_dir, 'negative_prompts').with_suffix('.neg.txt')
+            # breakpoint()
+            print(f"Negative prompt: {error}")
+            neg_prompt_file = Path(sel_img.parent, 'negative_prompts').with_suffix('.neg.txt')
             with open(neg_prompt_file, "a", encoding="utf-8") as f:
                 f.write(prompt + "\n")
 
@@ -170,6 +174,10 @@ def handle_image_generation(page, sel_img, img_dir, prompt, name):
 
     else:
         print("success")
+        # breakpoint()
+        pos_prompt_file = Path(sel_img.parent, 'positive_prompts').with_suffix('.txt')
+        with open(pos_prompt_file, "a+", encoding="utf-8") as f:
+            f.write(prompt + "\n")
         save_response_to_csv(response, name, sel_img, prompt)
     return True
 
@@ -204,9 +212,14 @@ def generate_video(page, name):
         # if not prompt_checking:
         return
     img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan3"
+    img_dirQ = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\queue_wan"
     page.goto("https://create.wan.video/generate")
     sleep(5)
+    click_close(page)
+    available_credits = int( page.locator("[data-test-id=\"header-popover-button-credit\"]").inner_text())
     sel_img, prompt = get_random_image_and_prompt(img_dir)
+    if available_credits < 1:
+        sel_img, prompt = get_random_image_and_prompt(img_dirQ)
     # try:
     page.locator('div', has_text= "image and describe").last.click() 
     page.locator('div', has_text= "image and describe").last.type(prompt)
@@ -221,7 +234,6 @@ def generate_video(page, name):
     file_chooser.set_files(str(sel_img))
     sleep(1)
     try:
-        available_credits = int( page.locator("[data-test-id=\"header-popover-button-credit\"]").inner_text())
         # breakpoint()
         if available_credits >= 20:
 
@@ -265,7 +277,7 @@ def generate_video(page, name):
     sleep(3)
     for _ in range(3):
         try:
-            status = handle_image_generation(page, sel_img, img_dir, prompt, name)
+            status = handle_image_generation(page, sel_img, prompt, name)
             if not status:
                 return
         except Exception as e:
@@ -309,6 +321,14 @@ def delete_queuing(page):
     except:
         pass
     # breakpoint()
+def click_close(page):
+    sleep(1)
+    # elem = page.locator('div.baxia-dialog-close')
+    for _ in range(5):
+        if  page.locator('div.baxia-dialog-close').count() > 0:
+            page.locator('div.baxia-dialog-close').click()
+            break
+        sleep(1)
 
 def run(playwright: Playwright) -> None:
     userid = r'ash' 
@@ -318,28 +338,36 @@ def run(playwright: Playwright) -> None:
     # if prompt_checking:
     #     headless = False
     dirs_paths = [ 
-    #  r"C:\dumpinGGrounds\ffcellular",
+     r"C:\dumpinGGrounds\ffcellular",
      r"C:\dumpinGGrounds\ffptemp2",
      r"C:\dumpinGGrounds\ffptemp3",
-    #  r"C:\dumpinGGrounds\ffptemp4",
+     r"C:\dumpinGGrounds\ffptemp4",
+     r"C:\dumpinGGrounds\ffptemp5",
+     r"C:\dumpinGGrounds\ffptemp6",
      r"C:\dumpinGGrounds\ffgithub",
      r"C:\dumpinGGrounds\tempmailsffprofile",
-    #  r"C:\dumpinGGrounds\ffprofilediscord",
-    #  r'C:\dumpinggrounds\browserprofileff',
+     r"C:\dumpinGGrounds\ffprofilediscord",
+     r'C:\dumpinggrounds\browserprofileff',
      ]
     #     headless = False
     # dirs_paths = [ 
     # ]
-
+    mdm = 10
     # profile_dirs = [profile_dir, discord_dir, github, tempmail]
     download_path = os.path.abspath("gemni_downloads")
+    dp = r'C:\Personal\Developed\Hailuio\seart_downloads\mp4s'
+    # keyboard.add_hotkey('ctrl+shift+f1', open_target_dir_in_explorer, args=(download_path,))
+    keyboard.add_hotkey('ctrl+shift+f1', open_target_dir_in_explorer, args=(dp,))
     os.makedirs(download_path, exist_ok=True)
     # dirs = [x for x in itertools.chain( Path(profile_dir).iterdir(), Path(github).iterdir()) if x.is_dir()]
     # dirs = [x for x in itertools.chain( Path(profile_dir).iterdir(), Path(github).iterdir(), Path(discord_dir).iterdir(), Path(tempmail).iterdir()) if x.is_dir()]
     # breakpoint()
     xdir = [Path(p).iterdir() for p in dirs_paths if Path(p).is_dir() ]
-    dirs = [x for x in itertools.chain(*xdir ) if x.is_dir()]
-    shuffle(dirs)
+    all_dirs = [x for x in itertools.chain(*xdir ) if x.is_dir()]
+    shuffle(all_dirs)
+    dirs = all_dirs[:mdm]
+
+    all_dirs = all_dirs[mdm:]
     exclude_user = []
     exclude_user_file = Path("exclude_user.txt")
     # if prompt_checking:
@@ -389,10 +417,17 @@ def run(playwright: Playwright) -> None:
             with exclude_user_file.open("r", encoding="utf-8") as f:
                 exclude_user = [line.strip() for line in f if line.strip()]
             # dirs = [d for d in dirs if f'{d.parent}\\{d.name}' not in exclude_user]
+            all_dirs = [d for d in all_dirs if str(d) not in exclude_user]
             dirs = [d for d in dirs if str(d) not in exclude_user]
+            print(f' {len(all_dirs) + len(dirs)} users remaining after exclusion.')
             # breakpoint()
+        if len(dirs) < mdm:
+            temp_len = mdm-len(dirs)
+            dirs.extend(all_dirs[:temp_len])
+            all_dirs = all_dirs[temp_len:]
         if len(dirs) < 1:
             break
+            # break
         pbar = tqdm.tqdm(dirs)
         min_wait = 10 * 60  # 7 minutes in seconds
         if elapsed and elapsed < min_wait :
@@ -426,8 +461,10 @@ def run(playwright: Playwright) -> None:
             page = browser.new_page()
             page.set_default_timeout(30000)
             page.goto("https://create.wan.video/generate")
+            click_close(page)
+            # breakpoint()
+            
             if queue_update:
-                # breakpoint()
                 delete_queuing(page)
             if stop_at_login:
                 breakpoint()
@@ -446,7 +483,10 @@ def run(playwright: Playwright) -> None:
             
             # if 'ffprofilediscord' in str(user):
             # sleep(9000)
+            # try:
             claim_free_credits(page)
+            # except Exception as e:
+                # print(f'exception claiming free credits {e}')
             generate_video(page, userid)
             # download_files(page)
             # breakpoint()

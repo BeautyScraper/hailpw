@@ -13,7 +13,7 @@ from notSoRand import random_line
 from os import listdir
 import os
 from os.path import isdir, join
-from image_prompt import get_random_image_and_prompt
+from image_prompt import get_random_image_and_prompt, is_duration_passed, store_timestamp
 
 
 
@@ -250,24 +250,27 @@ def run(playwright: Playwright) -> None:
     download_path = os.path.abspath("gemni_downloads")
     os.makedirs(download_path, exist_ok=True)
     dirs = [x for x in itertools.chain( Path(profile_dir).iterdir()) if x.is_dir()]
-    shuffle(dirs)
+    # shuffle(dirs)
     image_dir = Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\unlucid")
     
     for user in dirs:
         if not user.is_dir():
             continue
         userid = user.name
+        # breakpoint()
+        if not is_duration_passed(f'wan_{user.parent.name}_{userid}.json' ):
+            print(f"Skipping user {userid} as duration has not passed.")
+            continue
         # if not "mamu" in userid:
         #     continue
-        
         print(f"Using user ID: {userid}")
         # user_data_dir = Path(rf'{profile_dir}\{userid}')
         browser = playwright.firefox.launch_persistent_context(str(user),headless=True,downloads_path=download_path)
         page = browser.new_page()
         page.set_default_timeout(30000)
         page.goto("https://unlucid.ai/gems")
-        # breakpoint()
-
+        duration_left = 10
+        # page.pause()
         negative_replies_max_count = 5
         if not any(user.iterdir()):
             print(f"User directory {user} is empty.")
@@ -281,6 +284,12 @@ def run(playwright: Playwright) -> None:
         sleep(2)
         # if  int(page.locator(".counter").inner_text()) >= 15:
         #     create_video(page)
+        try:
+            cm = page.locator('div', has_text = 'come back in').last.text_content()
+            duration_left =  int(re.search('(\d\d):(\d\d)',cm).group(1)) * 60 + int(re.search('(\d\d):(\d\d)',cm).group(2))
+            store_timestamp(duration_left, f'wan_{user.parent.name}_{userid}.json' )
+        except:
+            print('Error occurred while storing timestamp.')
         # if  int(page.locator(".counter").inner_text()) >= 5:
         #     create_image(page)
         # download_images(page)

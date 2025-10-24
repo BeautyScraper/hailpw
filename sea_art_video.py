@@ -1,6 +1,7 @@
 import itertools
 from random import choice, randint, shuffle
 import shutil
+import keyboard
 import pandas as pd
 from playwright.sync_api import Playwright, sync_playwright, expect
 from pathlib import Path
@@ -15,7 +16,7 @@ from notSoRand import random_line
 from os import listdir
 import os
 from os.path import isdir, join
-from image_prompt import get_random_image_and_prompt, save_all_req_resp
+from image_prompt import get_random_image_and_prompt, input_with_timeout, open_target_dir_in_explorer, save_all_req_resp
 
 
 
@@ -120,6 +121,8 @@ def download_videos(page):
             process_imgbox(page, imgbox)
         except Exception as e:
             print(f"Error processing video {i+1}: {e}")
+            page.goto(page.url)
+            sleep(10)
             # breakpoint()
             continue
         # sleep(5)
@@ -301,7 +304,9 @@ def run(playwright: Playwright) -> None:
     dirs = [x for x in itertools.chain(Path(discord_dir).iterdir(), Path(profile_dir).iterdir()) if x.is_dir()]
     shuffle(dirs)
     image_dir = Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\sea_art")
-
+    dp = r'C:\Personal\Developed\Hailuio\seart_downloads\mp4s'
+    # keyboard.add_hotkey('ctrl+shift+f1', open_target_dir_in_explorer, args=(download_path,))
+    keyboard.add_hotkey('ctrl+shift+f1', open_target_dir_in_explorer, args=(download_path,))
     for user in tqdm(dirs):
         if not user.is_dir():
             continue
@@ -313,7 +318,11 @@ def run(playwright: Playwright) -> None:
         
         print(f"Using user ID: {userid}")
         # user_data_dir = Path(rf'{profile_dir}\{userid}')
-        browser = playwright.firefox.launch_persistent_context(str(user),headless=True,downloads_path=download_path)
+        headless_flag = True
+        result = input_with_timeout("Press Enter to continue with this user or wait 10 seconds to skip...", 10, 'f')
+        if result != 'f':
+            headless_flag = False
+        browser = playwright.firefox.launch_persistent_context(str(user),headless=headless_flag,downloads_path=download_path)
         page = browser.new_page()
         page.set_default_timeout(60000 * 2)
         # breakpoint()

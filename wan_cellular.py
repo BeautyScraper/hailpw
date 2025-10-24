@@ -214,7 +214,7 @@ def run(playwright: Playwright) -> None:
     github = r"C:\dumpinGGrounds\ffgithub"
     tempmail = r"C:\dumpinGGrounds\tempmailsffprofile"
     # cellular = r"C:\dumpinGGrounds\ffptemp2"
-    cellular = r"C:\dumpinGGrounds\ffptemp4"
+    cellular = r"C:\dumpinGGrounds\ffptemp6"
     # profile_dirs = [profile_dir, discord_dir, github, tempmail]
     download_path = os.path.abspath("gemni_downloads")
     os.makedirs(download_path, exist_ok=True)

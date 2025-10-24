@@ -26,9 +26,17 @@ https://www.seaart.ai/models/detail/4491c0d88c66315c007766fd8d646eb9@@Ayesha Tak
 https://www.seaart.ai/models/detail/aa3e4d50043b2a9e1521ffc972f0d1a6@@Malavika Mohanan SDXL - SeaArt AI Model
 https://www.seaart.ai/models/detail/83156627dfb6db05a3a679d080cc2438@@Katrina Kaif - SeaArt AI Model
 https://www.seaart.ai/models/detail/82444f2b4bc2be58f19d820bdc3c3204@@Anushka Sharma - SeaArt AI Model
-https://www.seaart.ai/models/detail/e51e582a1f9caea9b8a94bac3218ad79
-https://www.seaart.ai/models/detail/cf30c9ac6502df4cd2ac062895d220d2
-https://www.seaart.ai/models/detail/d1614f881a250721792ec2cdeca248ab
+https://www.seaart.ai/models/detail/e51e582a1f9caea9b8a94bac3218ad79@@Shilpa Shetty - Indian Actress (Flux) - SeaArt AI Model
+https://www.seaart.ai/models/detail/cf30c9ac6502df4cd2ac062895d220d2@@Tamannaah Bhatia - SeaArt AI Model
+https://www.seaart.ai/models/detail/d1614f881a250721792ec2cdeca248ab@@Nushrratt Bharuccha - SeaArt AI Model
 https://www.seaart.ai/models/detail/d9caac1627e34a818ce042b86c8dccf6@@Genelia Flux4 - SeaArt AI Model
 https://www.seaart.ai/models/detail/d0as3d5e878c738ju510@@Kajal Agarwal - SeaArt AI Model
 https://www.seaart.ai/models/detail/08927bbd1a4ac0ad9e3bc9ce44fe8830@@Nayanthara - SeaArt AI Model
+https://www.seaart.ai/models/detail/a0281f0a41b4eba0d99c4837df510f66@@Gauhar Khan - SeaArt AI Model
+https://www.seaart.ai/models/detail/b1ecb561cb2ab1859f1922c268d3ed92@@Charmi Kaur - Indian Actress - Flux - LoRA - SeaArt AI Model
+https://www.seaart.ai/models/detail/d5f8ac271f94e777c4181b5d6383bebe@@Shenaz Treasury - Indian Actress/Model/VJ - Flux - LoRA - SeaArt AI Model
+https://www.seaart.ai/models/detail/afe7c36d1c67487d49071a6cb93ba494@@Sushmita Sen - Indian Actress / Miss Universe - Flux - LoRA - SeaArt AI Model
+https://www.seaart.ai/models/detail/62b70779e32010dcb212fe1b5a09d20c@@Amrita Rao - Indian Actress - Flux - LoRA - SeaArt AI Model
+https://www.seaart.ai/models/detail/0e6b2ee921374c29dc469af5ffe61fc0@@Nostalgia Series - II: Sharmila Tagore - Former Indian Actress - Flux - LoRA - SeaArt AI Model
+https://www.seaart.ai/models/detail/92d67464ebf58b2105ff8d0c6384782c@@Aditi Rao Hydari - Indian Actress - Flux - Lora - SeaArt AI Model
+https://www.seaart.ai/models/detail/02d1920c86e3032d2d24fe90c9a8ef5a@@Sanya Malhotra - Indian Actress - Flux - LoRA - SeaArt AI Model
