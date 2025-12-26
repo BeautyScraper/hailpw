@@ -10,7 +10,7 @@ def copy_matching_files(search_word: str, src_dir: Path, dst_dir: Path):
 
     for txt_file in src_dir.glob("*.txt"):
         mp4_file = txt_file.with_suffix(".mp4")
-
+        png_file = txt_file.with_suffix(".png")
         try:
             content = txt_file.read_text(encoding="utf-8", errors="ignore").lower()
         except Exception as e:
@@ -22,6 +22,8 @@ def copy_matching_files(search_word: str, src_dir: Path, dst_dir: Path):
             shutil.copy(txt_file, dst_dir)
             if mp4_file.exists():
                 shutil.move(mp4_file, dst_dir)
+            elif png_file.exists():
+                shutil.move(png_file, dst_dir)
             else:
                 print(f"⚠️ {mp4_file.name} not found")
 

@@ -96,6 +96,7 @@ def download_videos(page):
     # if page.locator(".model-popover-content-title > i:nth-child(2)").click().count() > 0:
     imgboxs = page.locator(".image-render-box").all()
     print(f"Found {len(imgboxs)} videos to process.")
+    # breakpoint()
     for i, imgbox in enumerate(reversed(imgboxs)):
         # breakpoint()
         imgbox.scroll_into_view_if_needed()
@@ -360,8 +361,8 @@ def run(playwright: Playwright) -> None:
                 # breakpoint()
                 # page.locator(".claim-button").first.click()
                 if page.locator(".claim-button").count() < 1:
-                    print("No claim button found, possibly out of credits.")
-                    breakpoint()
+                    print("No claim button found,.")
+                    # breakpoint()
                     break
                 page.locator(".claim-button").last.click()
                 page.goto("https://www.seaart.ai/create/video?id=3af4aa8d07e30b4a895b45771232f2bm&model_ver_no=a1b2c3d4-e5f6-47g8-h9i0-j1k2l3m4n5o6")

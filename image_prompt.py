@@ -3,7 +3,7 @@
 import itertools
 from pathlib import Path
 import queue
-from random import choice
+from random import choice, random
 import shutil
 from story_weaver import RandomTextGenerator
 import threading
@@ -15,6 +15,7 @@ import sys
 import os
 import json
 from datetime import datetime, timedelta
+from typing import List, Set
 
 
 csv_file =  Path(r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan3\genvideo_details.csv") #the csv file has these column user	sel_image	prompt	nsfw	success	httpCode	errorCode	data	requestId	failed	traceId
@@ -220,15 +221,92 @@ def input_with_timeout(prompt, timeout, default):
         return default
     return user_input[0]
 
+import json
+import random
+from pathlib import Path
+from typing import List, Set
+
+
+# ---------------- Helper Functions ---------------- #
+
+def load_used_data(dir_path: Path) -> Set[str]:
+    """Load used image data from JSON file in this directory."""
+    state_file = dir_path / ".used_images.json"
+    if state_file.exists():
+        try:
+            with open(state_file, "r", encoding="utf-8") as f:
+                return set(json.load(f))
+        except Exception:
+            return set()
+    return set()
+
+
+def save_used_data(dir_path: Path, used: Set[str]):
+    """Save used image data to JSON file in this directory."""
+    state_file = dir_path / ".used_images.json"
+    with open(state_file, "w", encoding="utf-8") as f:
+        json.dump(list(used), f, indent=2)
+
+
+def get_valid_image_dirs(base_dir: Path) -> List[Path]:
+    """Return list of valid subdirectories containing image files."""
+    return [
+        x for x in base_dir.iterdir()
+        if x.is_dir() and '6969' not in str(x)
+           and any(
+               f.suffix.lower() in ['.png', '.jpg', '.jpeg']
+               for f in x.iterdir() if f.is_file()
+           )
+    ]
+
+
+def get_all_images_from_dir(img_dir: Path) -> List[str]:
+    """Return all valid image file paths from a given directory."""
+    return [
+        str(x) for x in img_dir.rglob('*.*')
+        if x.is_file() and x.suffix.lower() in ['.png', '.jpg', '.jpeg']
+        and '6969' not in str(x)
+    ]
+
+
+def select_random_image(images: List[str], used: Set[str]) -> str:
+    """Select a random image not in 'used'; reset if all used."""
+    remaining = [img for img in images if img not in used]
+    if not remaining:
+        used.clear()  # Reset once all have been used
+        remaining = images
+    selected = random.choice(remaining)
+    used.add(selected)
+    return selected
+
+
+# ---------------- Main Wrapper ---------------- #
+
 def random_image_from_dir(image_dir):
-    """Returns a random image file from the specified directory."""
-    img_dirs = [x for x in image_dir.iterdir() if x.is_dir() and '6969' not in str(x) and any(x.suffix.lower() in ['.png', '.jpg', '.jpeg'] for x in x.iterdir() if x.is_file())]
-    images = [x for x in choice(img_dirs).rglob('*.*') if x.is_file() and x.suffix.lower() in ['.png', '.jpg', '.jpeg'] and '6969' not in str(x)]
-    if not images:
-        print("No images found in the directory.")
-        breakpoint()
+    """
+    Selects a random image file from a random valid subdirectory.
+    Each directory maintains its own '.used_images.json' record.
+    """
+    image_dir = Path(image_dir)
+    img_dirs = get_valid_image_dirs(image_dir)
+
+    if not img_dirs:
+        print("No valid image subdirectories found.")
         return None
-    return choice(images)
+
+    chosen_dir = random.choice(img_dirs)
+    images = get_all_images_from_dir(chosen_dir)
+
+    if not images:
+        print(f"No images found in: {chosen_dir}")
+        return None
+
+    used = load_used_data(chosen_dir)
+    selected_image = select_random_image(images, used)
+    save_used_data(chosen_dir, used)
+
+    return Path(selected_image)
+
 
 def get_random_image_and_prompt(dir):
     image_dir = Path(dir)

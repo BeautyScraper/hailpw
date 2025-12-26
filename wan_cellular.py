@@ -166,6 +166,7 @@ def claim_free_credits(page):
     except:
         print("No small button to click.")
 
+
 def register(browser, page):
         sleep(5)
         if page.locator('span', has_text='Sign up').count() < 1:
@@ -174,6 +175,7 @@ def register(browser, page):
         page2.set_default_timeout(120000)
         page2.goto("https://tempmailo.com/")
         # page2.locator('button', has_text='Change').first.click()
+        sleep(10)
         page2.locator('button', has_text='Copy').click()
         pwd = 'c6556Bhg47w5PYCv'
         usrname = f'ghtyrt{randint(100, 999)}' 
@@ -213,8 +215,8 @@ def run(playwright: Playwright) -> None:
     discord_dir = r"C:\dumpinGGrounds\ffprofilediscord"
     github = r"C:\dumpinGGrounds\ffgithub"
     tempmail = r"C:\dumpinGGrounds\tempmailsffprofile"
-    # cellular = r"C:\dumpinGGrounds\ffptemp2"
-    cellular = r"C:\dumpinGGrounds\ffptemp6"
+    cellular = r"C:\dumpinGGrounds\ffptemp12"
+    # cellular = r"C:\dumpinGGrounds\wanCellnewtest1"
     # profile_dirs = [profile_dir, discord_dir, github, tempmail]
     download_path = os.path.abspath("gemni_downloads")
     os.makedirs(download_path, exist_ok=True)
@@ -229,7 +231,7 @@ def run(playwright: Playwright) -> None:
         userid = user.name
         print(f"Using user ID: {userid}")
         # if  'ffgithub' not in str(user) or 'temp' not in str(user):
-        # if not 'alindn755'  in str(user):
+        # if not '5'  in str(user):
         #     continue
 
 

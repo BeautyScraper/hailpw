@@ -109,7 +109,7 @@ def get_exception_details():
 def try_download(page, elem, max_attempts=5, delay=2):
     for attempt in range(max_attempts):
         try:
-            with page.expect_download(timeout=16000) as download_info:
+            with page.expect_download(timeout=8000) as download_info:
                 elem.click()
             download = download_info.value
             print(f"Download started on attempt {attempt + 1}")
@@ -236,7 +236,9 @@ def download_image(page,i,filename="",useridname=""):
     #     print(f"Failed to save image src: {e}")
     #     pass
     # save_image_from_page(page, "img.image-container", f"failed\\downloaded_image_{randint(1000, 9999)}_.png")
-    download_info = try_download(page, page.locator(".action-button > button:nth-child(1)").first)
+    # download_info = try_download(page, page.locator(".action-button > button:nth-child(1)").first)
+    # breakpoint()
+    download_info = try_download(page, page.locator('button[data-test-id="download-generated-image-button"]').last)
     download = download_info.value
     extension = download_info.value.suggested_filename.split('.')[-1]
 
@@ -410,7 +412,8 @@ def run(playwright: Playwright) -> None:
                     prompt = new_prompt + random_line('stills.txt')[0]
                 else:
                     prompt = new_prompt
-                prompt = prompt + "dont include `  in the reply" 
+                # prompt = prompt + "dont include `  in the reply" 
+                prompt = prompt  
                 print(Colors.BLUE + f"{ref_prompt_file}: {prompt}" + Colors.RESET)
                 # keyboard.add_hotkey('ctrl+shift+v', lambda:open_in_vscode(), args=(str(Path(r'C:\Personal\Developed\Hailuio\files\gemini') / (ref_prompt_file+".txt")),))
                 print(Colors.YELLOW + f"Iteration {i+1}, User ID: {userid}, Negative Replies Max Count: {negative_replies_max_count} Success Rate:{prompt_success_rate} Total Prompts:{prompt_total_use}"  + Colors.RESET)

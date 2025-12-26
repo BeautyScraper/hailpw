@@ -17,6 +17,7 @@ from image_prompt import get_random_image_and_prompt, is_duration_passed, store_
 
 
 
+create_video_flag = False
 
 def try_download(page, elem, max_attempts=5, delay=2):
     for attempt in range(max_attempts):
@@ -258,7 +259,7 @@ def run(playwright: Playwright) -> None:
             continue
         userid = user.name
         # breakpoint()
-        if not is_duration_passed(f'wan_{user.parent.name}_{userid}.json' ):
+        if not is_duration_passed(f'wan_{user.parent.name}_{userid}.json' ) and not create_video_flag:
             print(f"Skipping user {userid} as duration has not passed.")
             continue
         # if not "mamu" in userid:
@@ -271,6 +272,7 @@ def run(playwright: Playwright) -> None:
         page.goto("https://unlucid.ai/gems")
         duration_left = 10
         # page.pause()
+        sleep(5)
         negative_replies_max_count = 5
         if not any(user.iterdir()):
             print(f"User directory {user} is empty.")
@@ -282,8 +284,8 @@ def run(playwright: Playwright) -> None:
 
 
         sleep(2)
-        # if  int(page.locator(".counter").inner_text()) >= 15:
-        #     create_video(page)
+        if int(page.locator(".counter").inner_text()) >= 15 and create_video_flag:
+            create_video(page)
         try:
             cm = page.locator('div', has_text = 'come back in').last.text_content()
             duration_left =  int(re.search('(\d\d):(\d\d)',cm).group(1)) * 60 + int(re.search('(\d\d):(\d\d)',cm).group(2))

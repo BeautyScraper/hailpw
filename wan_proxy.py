@@ -12,8 +12,6 @@ from time import sleep, time
 import re
 import json
 import pyperclip
-from rich.console import Console
-console = Console()
 
 import tqdm
 # from user_id import userids , img_dir
@@ -25,22 +23,11 @@ from image_prompt import get_info_by_data_column, get_random_image_and_prompt,in
 from oldest_time import update_oldest_datetime
 import csv
 
-from wan_helper import setup_image_to_video
-
 allow_rerun = False
 prompt_checking = False
 force_gui = False
 max_negative = 50
-wan_email_path = "wan_emails.txt"
 
-def safe_click(elem,wait_time = 3,index= 0):
-    sleep(wait_time)
-    if elem.count() > 0:
-        try:
-            elem.nth(index).click(force=True)
-        except Exception as e:
-            # breakpoint()
-            print(f"Error clicking element: {e}")
 
 if prompt_checking:
     force_gui=True
@@ -63,7 +50,7 @@ def download_video(video_url, videoid, download_dir, filename):
         with open(download_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
-        console.print(f"Downloaded video to {download_path}", style="green")
+        print(f"Downloaded video to {download_path}")
         # Record the download by videoid
         with records_file.open("a") as f:
             f.write(videoid + "\n")
@@ -82,7 +69,7 @@ def download_files(page, name='wan'):
     downloaded_something = False
     for vdiv,prompt in zip(page.locator('div.infinite-scroll-component').locator('div[id*="__"]').all(), page.locator('span.prompt-tooltip').all()):
         video_id = vdiv.get_attribute('id').split('__')[0]
-        template_url = f"https://cdn.wanxai.com/wanx/{wanuserid}/image_to_video/{video_id}.mp4"
+        template_url = f"http://cdn.wanxai.com/wanx/{wanuserid}/image_to_video/{video_id}.mp4"
         # breakpoint()
         filename = f"{video_id}_{name}_{wanuserid}.mp4"
         row = get_info_by_data_column(video_id)
@@ -101,7 +88,7 @@ def download_files(page, name='wan'):
             update_nsfw(video_id, nsfw)
             
         if not x:
-            template_url2 = f"https://cdn.wanxai.com/wanx/{wanuserid}/video_extension/{video_id}.mp4"
+            template_url2 = f"http://cdn.wanxai.com/wanx/{wanuserid}/video_extension/{video_id}.mp4"
             download_video(template_url2, video_id, download_dir, filename)
         if not Path(download_dir, filename).with_suffix('.txt').exists() and Path(download_dir, filename).exists():
             # breakpoint()
@@ -158,7 +145,7 @@ def handle_image_generation(page, sel_img, prompt, name):
         name (str): Identifier for saving response
     """
 
-    with page.expect_response("**/api/common/imageGen",timeout=60000) as response_info:
+    with page.expect_response("**/api/common/imageGen",timeout=30000) as response_info:
         page.locator('div[data-test-id="creation-form-button-submit"]').click()
 
     response = response_info.value
@@ -181,7 +168,7 @@ def handle_image_generation(page, sel_img, prompt, name):
 
         elif 'prompt' in error:
             # breakpoint()
-            console.print(f"😒 Negative prompt: {error}",style="red")
+            print(f"Negative prompt: {error}")
             neg_prompt_file = Path(sel_img.parent, 'negative_prompts').with_suffix('.neg.txt')
             with open(neg_prompt_file, "a", encoding="utf-8") as f:
                 f.write(prompt + "\n")
@@ -195,7 +182,7 @@ def handle_image_generation(page, sel_img, prompt, name):
             # point()
 
     else:
-        print("👍 Success")
+        print("success")
         # breakpoint()
         pos_prompt_file = Path(sel_img.parent, 'positive_prompts').with_suffix('.txt')
         with open(pos_prompt_file, "a+", encoding="utf-8") as f:
@@ -204,11 +191,8 @@ def handle_image_generation(page, sel_img, prompt, name):
     return True
 
 
-
-
-
 def generate_video(page, name):
-    if page.url != "https://create.wan.video/generate":
+    if page.url != "http://create.wan.video/generate":
         print("reloading page to check status")
         sleep(5)
     sleep(1)
@@ -218,7 +202,7 @@ def generate_video(page, name):
         return
         
     # breakpoint()
-    retries = 1
+    retries = 10
     while page.locator('div', has_text='ust a moment').count() > 0 and retries > 0:
         retries -= 1
         print("wait for just a moment to finish")
@@ -237,16 +221,64 @@ def generate_video(page, name):
         # if not prompt_checking:
         return
     img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan3"
-    img_dirQ = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan3"
-    # img_dirQ = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\queue_wan"
-    page.goto("https://create.wan.video/generate")
+    img_dirQ = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\queue_wan"
+    page.goto("http://create.wan.video/generate")
     sleep(5)
-    # click_close(page)
+    click_close(page)
     available_credits = int( page.locator("[data-test-id=\"header-popover-button-credit\"]").inner_text())
     sel_img, prompt = get_random_image_and_prompt(img_dir)
     if available_credits < 1:
         sel_img, prompt = get_random_image_and_prompt(img_dirQ)
-    setup_image_to_video(page=page,prompt=prompt,sel_img=sel_img,available_credits=available_credits)
+    # try:
+    page.locator('div', has_text= "image and describe").last.click() 
+    page.locator('div', has_text= "image and describe").last.type(prompt)
+    # except:
+    #     print("Could not set prompt, skipping.")
+    #     breakpoint()
+    page.locator('div[data-test-id="creation-form-box-First Frame"]').click()
+    with page.expect_file_chooser() as fc_info:
+        page.locator('div[data-test-id="creation-form-box-upload"]').click()   
+    # page.locator('input[type="file"]').set_input_files(str(sel_img))
+    file_chooser = fc_info.value
+    file_chooser.set_files(str(sel_img))
+    sleep(1)
+    try:
+        # breakpoint()
+        if available_credits >= 20:
+
+            page.locator('div[data-test-id="creation-form-button-model"]').click()
+            page.locator('div[data-test-id="creation-form-box-Wan2_5"]').click()
+            page.locator('div[data-test-id="creation-form-button-resolution"]').click()
+            page.locator('div[data-test-id="creation-form-box-1280*720"]').click()
+            page.locator('div[data-test-id="creation-form-button-duration"]').click()
+            page.locator('div[data-test-id="creation-form-box-10"]').click()
+        elif available_credits >= 10:
+
+            page.locator('div[data-test-id="creation-form-button-model"]').click()
+            page.locator('div[data-test-id="creation-form-box-Wan2_5"]').click()
+            page.locator('div[data-test-id="creation-form-button-resolution"]').click()
+            page.locator('div[data-test-id="creation-form-box-640*480"]').click()
+            page.locator('div[data-test-id="creation-form-button-duration"]').click()
+            page.locator('div[data-test-id="creation-form-box-10"]').click()
+            
+            
+            # breakpoint()
+        elif available_credits >= 5:
+
+            page.locator('div[data-test-id="creation-form-button-model"]').click()
+            page.locator('div[data-test-id="creation-form-box-Wan2_2"]').click()
+            page.locator('div[data-test-id="creation-form-button-resolution"]').click()
+            page.locator('div[data-test-id="creation-form-box-1280*720"]').click()
+            # breakpoint()
+        elif available_credits < 1:
+            # print("Not enough credits to generate video.")
+            page.locator('div[data-test-id="creation-form-button-duration"]').click()
+            page.locator('div[data-test-id="creation-form-box-10"]').click() 
+            page.locator('div[data-test-id="creation-form-button-resolution"]').click()
+            page.locator('div[data-test-id="creation-form-box-1920*1080"]').click()
+            # return
+    except:
+        pass
     if prompt_checking:
         breakpoint()
     # breakpoint()
@@ -285,54 +317,6 @@ def claim_free_credits(page):
     #     page.locator(".ant-btn-sm").count() > 0 and page.locator(".ant-btn-sm").click(timeout=1000)
     # except:
     #     print("No small button to click.")
-def store_email_actual(page1,user):
-    # breakpoint()
-    page1.locator("[data-test-id=\"header-popover-button-user\"]").get_by_role("img").click()
-    page1.get_by_text("Account").click()
-    page1.get_by_text("Email:").click()
-    email = page1.get_by_text("@").text_content()
-    with open(wan_email_path, "a", encoding="utf-8") as f:
-        f.write(f"{user}:{email}\n")
-
-def store_email(page, user):
-    if Path(wan_email_path).is_file():
-        with open(wan_email_path, "r+", encoding="utf-8") as f:
-            for lines in f:
-                if user in lines:
-                    return
-    store_email_actual(page, user)
-
-def login_again_actual(page, userid,lines):
-
-    print('login again')
-    email = lines.split(':')[-1].strip()
-    # breakpoint()
-    page.locator('input[placeholder="Email address"]').fill(email)
-    page.locator('input[placeholder="Password"]').fill('c6556Bhg47w5PYCv')
-    page.locator('button[type="submit"]', has_text="log in").click()
-    sleep(2)
-
-def login_again(browser,page, userid):
-    sleep(2)
-    # print('login again started')
-    if page.locator('*', has_text='Sign up').count() < 1:
-        return
-    # breakpoint()
-    
-    if Path(wan_email_path).is_file():
-        with open(wan_email_path, "r", encoding="utf-8") as f:
-            for lines in f:
-                if userid in lines:
-
-                    login_again_actual(page, userid,lines)
-                    return
-    browser.close()
-    # breakpoint()
-    # Path(userid).rmdir()
-    shutil.rmtree(userid)
-    assert False, f'No email found for {userid}, deleted profile dir.'
-
-
 
 def delete_queuing(page):
     # breakpoint()
@@ -349,7 +333,7 @@ def delete_queuing(page):
 def click_close(page):
     sleep(1)
     # elem = page.locator('div.baxia-dialog-close')
-    for _ in range(2):
+    for _ in range(5):
         if  page.locator('div.baxia-dialog-close').count() > 0:
             page.locator('div.baxia-dialog-close').click()
             break
@@ -363,22 +347,15 @@ def run(playwright: Playwright) -> None:
     # if prompt_checking:
     #     headless = False
     dirs_paths = [ 
-     r"C:\dumpinGGrounds\ffcellular",
-     r"C:\dumpinGGrounds\ffptemp2",
-     r"C:\dumpinGGrounds\ffptemp3",
-     r"C:\dumpinGGrounds\ffptemp4",
-     r"C:\dumpinGGrounds\ffptemp5",
-     r"C:\dumpinGGrounds\ffptemp6",
+    #  r"C:\dumpinGGrounds\ffcellular",
+    #  r"C:\dumpinGGrounds\ffptemp2",
+    #  r"C:\dumpinGGrounds\ffptemp3",
+    #  r"C:\dumpinGGrounds\ffptemp4",
+    #  r"C:\dumpinGGrounds\ffptemp5",
+    #  r"C:\dumpinGGrounds\ffptemp6",
      r"C:\dumpinGGrounds\ffptemp7",
-     r"C:\dumpinGGrounds\ffptemp10",
-     r"C:\dumpinGGrounds\ffptemp10",
-     r"C:\dumpinGGrounds\ffptemp11",
-     r"C:\dumpinGGrounds\ffptemp12",
-     r"C:\dumpinGGrounds\ffptemp9",
     #  r"C:\dumpinGGrounds\ffgithub",
-     r"C:\dumpinGGrounds\tempmailsffprofile",
-     r"C:\dumpinGGrounds\wanCellnewtest1",
-    #  r"C:\dumpinGGrounds\ffprofilediscord",
+    #  r"C:\dumpinGGrounds\tempmailsffprofile",
     #  r"C:\dumpinGGrounds\ffprofilediscord",
     #  r'C:\dumpinggrounds\browserprofileff',
      ]
@@ -386,8 +363,7 @@ def run(playwright: Playwright) -> None:
     # dirs_paths = [ 
     # r"C:\dumpinGGrounds\wanCellnewtest1",
     # ]
-    mdm = int(input_with_timeout("Enter MDM size (number of concurrent users): ", 10, "15"))
-
+    mdm = 10
     # profile_dirs = [profile_dir, discord_dir, github, tempmail]
     download_path = os.path.abspath("gemni_downloads")
     dp = r'C:\Personal\Developed\Hailuio\seart_downloads\mp4s'
@@ -405,7 +381,6 @@ def run(playwright: Playwright) -> None:
     all_dirs = all_dirs[mdm:]
     exclude_user = []
     exclude_user_file = Path("exclude_user.txt")
-    exclude_user_file2 = Path("rendering_not_user.txt")
     # if prompt_checking:
     spec_user = None
     #     headless = True
@@ -455,18 +430,17 @@ def run(playwright: Playwright) -> None:
             # dirs = [d for d in dirs if f'{d.parent}\\{d.name}' not in exclude_user]
             all_dirs = [d for d in all_dirs if str(d) not in exclude_user]
             dirs = [d for d in dirs if str(d) not in exclude_user]
-            console.print(f' {len(all_dirs) + len(dirs)} users remaining after exclusion.', style="yellow")
+            print(f' {len(all_dirs) + len(dirs)} users remaining after exclusion.')
             # breakpoint()
         if len(dirs) < mdm:
             temp_len = mdm-len(dirs)
             dirs.extend(all_dirs[:temp_len])
             all_dirs = all_dirs[temp_len:]
-        if len(dirs) < 10:
-            exclude_user_file.unlink()
-            continue
+        if len(dirs) < 1:
+            break
             # break
         pbar = tqdm.tqdm(dirs)
-        min_wait = 10 * 60  # 7 minutes in seconds
+        min_wait = 1 * 60  # 7 minutes in seconds
         if elapsed and elapsed < min_wait :
             sleep_time = min_wait - elapsed
             print(f"Sleeping for {int(sleep_time)} seconds to ensure minimum 10 minutes elapsed.")
@@ -493,39 +467,138 @@ def run(playwright: Playwright) -> None:
                 continue
             if force_gui:
                 headless = False
-            browser = playwright.firefox.launch_persistent_context(str(user),headless=headless,downloads_path=download_path)
+            proxies = [
+                "http://196.1.93.10:80",
+"http://77.105.137.42:8080",
+"http://14.251.13.0:8080",
+"http://182.52.165.147:8080",
+"http://160.251.142.232:80",
+"http://41.89.56.116:3128",
+"http://34.81.160.132:80",
+"http://34.140.137.151:80",
+"http://84.39.112.144:3128",
+"http://89.58.57.45:80",
+"http://197.221.234.253:80",
+"http://219.65.73.81:80",
+"http://89.58.55.33:80",
+"http://211.230.49.122:3128",
+"http://95.173.218.76:8081",
+"http://95.173.218.71:8081",
+"http://95.173.218.66:8082",
+"http://95.173.218.78:8082",
+"http://95.173.218.75:8082",
+"http://62.99.138.162:80",
+"http://152.230.215.123:80",
+"http://198.98.48.76:31280",
+"http://95.173.218.80:8082",
+"http://172.210.101.217:3128",
+"http://198.98.57.213:31280",
+"http://143.42.66.91:80",
+"http://45.166.93.113:999",
+"http://54.226.156.148:20201",
+"http://134.209.29.120:80",
+"http://93.127.180.126:80",
+"http://108.141.130.146:80",
+"http://124.108.6.20:8085",
+"http://4.195.16.140:80",
+"http://4.245.123.244:80",
+"http://194.219.134.234:80",
+"http://181.174.164.221:80",
+"http://189.202.188.149:80",
+"http://194.158.203.14:80",
+"http://213.33.126.130:80",
+"http://213.157.6.50:80",
+"http://139.162.78.109:8080",
+"http://23.247.136.254:80",
+"http://103.249.120.207:80",
+"http://192.73.244.36:80",
+"http://138.68.60.8:80",
+"http://188.40.57.101:80",
+"http://74.48.194.151:1080",
+"http://35.197.89.213:80",
+"http://200.174.198.158:8888",
+"http://50.122.86.118:80",
+"http://90.162.35.34:80",
+"http://190.58.248.86:80",
+"http://154.90.48.76:80",
+"http://32.223.6.94:80",
+"http://133.18.234.13:80",
+"http://198.199.86.11:80",
+"http://193.123.237.191:8080",
+"http://123.30.154.171:7777",
+"http://219.93.101.62:80",
+"http://162.214.165.203:80",
+"http://43.156.183.112:1080",
+"http://161.35.70.249:8080",
+"http://159.203.61.169:3128",
+"http://186.65.109.21:81",
+"http://38.54.71.67:80",
+"http://213.142.156.97:80",
+"http://41.191.203.167:80",
+"http://52.188.28.218:3128",
+"http://143.92.61.153:8082",
+"http://46.249.100.124:80",
+"http://154.236.177.103:1977",
+"http://129.226.150.86:20035",
+"http://188.166.230.109:31028",
+"http://118.27.111.97:80",
+"http://81.90.149.188:3128",
+"http://47.91.120.190:9098",
+"http://198.54.124.88:8080",
+"http://8.219.97.248:80",
+"http://67.43.228.250:16043",
+"http://213.143.113.82:80",
+"http://91.132.92.150:80",
+"http://41.191.203.161:80",
+"http://176.108.246.18:10801",
+"http://40.192.100.189:8141",
+"http://67.43.228.253:3881",
+"http://4.156.78.45:80",
+"http://128.199.202.122:8080",
+"http://41.32.39.7:3128",
+"http://156.38.112.11:80",
+"http://41.191.203.160:80",
+"http://202.58.77.77:1111",
+"http://16.78.104.244:9078",
+"http://154.65.39.7:80",
+"http://41.65.160.173:1976",
+"http://209.97.150.167:8080",
+"http://91.222.238.112:80",
+"http://152.231.29.135:999",
+"http://47.238.60.156:5060",
+]
+            selc_proxy = choice(proxies)
+            print(f'Using proxy {selc_proxy}')
+            proxy={
+                "server": selc_proxy,  # or 'socks5://127.0.0.1:9050'
+                # "username": "user",                    # optional
+                # "password": "pass"                     # optional
+            }
+            browser = playwright.firefox.launch_persistent_context(str(user),headless=headless,downloads_path=download_path, proxy=proxy)
             # user_data_dir = Path(rf'{profile_dir}\{userid}')
             page = browser.new_page()
-            page.set_default_timeout(30000)
-            page.goto("https://create.wan.video/generate")
-            safe_click(page.locator('button.ant-modal-close'),wait_time=3,index=0)
+            page.set_default_timeout(100000)
+            try:
+                page.goto("http://create.wan.video/generate")
+            except Exception as e:
+                print(f'exception goto generate {e}')
+                browser.close()
+                continue
+            click_close(page)
             # breakpoint()
-            safe_click(page.locator('div[class*="CloseIcon-sc"]'),wait_time=3,index=0)
-            # click_close(page)
-            # login_again(browser,page,f'{user.parent}\\{user.name}')
+            
             if queue_update:
                 delete_queuing(page)
             if stop_at_login:
                 breakpoint()
             sleep(3)
-            # if page.locator('*', has_text='Sign up').count() >= 1:
-            login_again(browser,page, f'{user.parent}\\{user.name}')
-            store_email(page, f'{user.parent}\\{user.name}')
-            safe_click(page.locator('button',has_text="check in"))
-            # breakpoint()
-            safe_click(page.locator('button.ant-modal-close[aria-label="Close"]'),wait_time=2,index=0)
-            # if page.locator('button.ant-modal-close[aria-label="Close"]').count() > 0:
-            #     page.locator('button.ant-modal-close[aria-label="Close"]').click()
-            available_credits = int( page.locator("[data-test-id=\"header-popover-button-credit\"]").inner_text())
-            if (page.locator('button', has_text='Get Member').count() > 0 and not prompt_checking ) or available_credits < 11:
+            if page.locator('button.ant-modal-close[aria-label="Close"]').count() > 0:
+                page.locator('button.ant-modal-close[aria-label="Close"]').click()
+            if page.locator('button', has_text='Get Member').count() > 0 and not prompt_checking:
                 print(f'excluded_{user.parent}\\{user.name}')
                 exclude_user.append(f'{user.parent}\\{user.name}')
                 with exclude_user_file.open("a", encoding="utf-8") as f:
                     f.write(f'{user.parent}\\{user.name}\n')
-                if page.locator('div', has_text='just a moment').count() > 0 and False:
-                    # breakpoint()
-                    with exclude_user_file2.open("a", encoding="utf-8") as f:
-                        f.write(f'{user.parent}\\{user.name}\n')
                     # f.flush()
             # sleep(500)
             # browser.close()
@@ -533,14 +606,10 @@ def run(playwright: Playwright) -> None:
             
             # if 'ffprofilediscord' in str(user):
             # sleep(9000)
-            try:
-                claim_free_credits(page)
-            except Exception as e:
-                # breakpoint()
-                page.locator('button', has_text='log in with google').click()
-                # browser.close()
-                print(f'exception claiming free credits {e}')
-                # continue
+            # try:
+            claim_free_credits(page)
+            # except Exception as e:
+                # print(f'exception claiming free credits {e}')
             generate_video(page, userid)
             # download_files(page)
             # breakpoint()

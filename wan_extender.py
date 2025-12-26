@@ -12,8 +12,6 @@ from time import sleep, time
 import re
 import json
 import pyperclip
-from rich.console import Console
-console = Console()
 
 import tqdm
 # from user_id import userids , img_dir
@@ -25,22 +23,11 @@ from image_prompt import get_info_by_data_column, get_random_image_and_prompt,in
 from oldest_time import update_oldest_datetime
 import csv
 
-from wan_helper import setup_image_to_video
-
 allow_rerun = False
 prompt_checking = False
 force_gui = False
 max_negative = 50
-wan_email_path = "wan_emails.txt"
 
-def safe_click(elem,wait_time = 3,index= 0):
-    sleep(wait_time)
-    if elem.count() > 0:
-        try:
-            elem.nth(index).click(force=True)
-        except Exception as e:
-            # breakpoint()
-            print(f"Error clicking element: {e}")
 
 if prompt_checking:
     force_gui=True
@@ -63,7 +50,7 @@ def download_video(video_url, videoid, download_dir, filename):
         with open(download_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
-        console.print(f"Downloaded video to {download_path}", style="green")
+        print(f"Downloaded video to {download_path}")
         # Record the download by videoid
         with records_file.open("a") as f:
             f.write(videoid + "\n")
@@ -99,34 +86,27 @@ def download_files(page, name='wan'):
             # breakpoint()
             downloaded_something = True
             update_nsfw(video_id, nsfw)
-            
         if not x:
             template_url2 = f"https://cdn.wanxai.com/wanx/{wanuserid}/video_extension/{video_id}.mp4"
             download_video(template_url2, video_id, download_dir, filename)
         if not Path(download_dir, filename).with_suffix('.txt').exists() and Path(download_dir, filename).exists():
             # breakpoint()
-            if not x:
-                try:
-                    page.locator('body').click()
-                    prompt.hover()
+            try:
+                page.locator('body').click()
+                prompt.hover()
 
-                    # page.locator('span.prompt-tooltip').first.focus()
-                    sleep(3)
-                    # message =  page.locator('div.ant-tooltip-inner[role="tooltip"]').last.inner_text()
-                
+                # page.locator('span.prompt-tooltip').first.focus()
+                sleep(3)
+                # message =  page.locator('div.ant-tooltip-inner[role="tooltip"]').last.inner_text()
+            
 
-                # if len(message) <= 3 :
-                except:
-                    pass
+            # if len(message) <= 3 :
+            except:
+                pass
         
-                rt = prompt.inner_text()
-                message = page.locator('div', has_text=rt).last.inner_text()
-                Path(download_dir, filename).with_suffix('.txt').write_text(message)
-            else:
-                if len(row.user.to_list()) >= 1:
-                    # breakpoint()
-                    Path(download_dir, filename).with_suffix('.txt').write_text(row['prompt'].to_list()[0])
-
+            rt = prompt.inner_text()
+            message = page.locator('div', has_text=rt).last.inner_text()
+            Path(download_dir, filename).with_suffix('.txt').write_text(message)
             
     return downloaded_something
 
@@ -158,15 +138,13 @@ def handle_image_generation(page, sel_img, prompt, name):
         name (str): Identifier for saving response
     """
 
-    with page.expect_response("**/api/common/imageGen",timeout=60000) as response_info:
+    with page.expect_response("**/api/common/imageGen",timeout=10000) as response_info:
         page.locator('div[data-test-id="creation-form-button-submit"]').click()
 
     response = response_info.value
     resp_json = response.json()
     global max_negative
-
     if 'errorMsg' in resp_json:
-        # breakpoint()
         error = resp_json['errorMsg']
         max_negative = max_negative - 1
         if max_negative <= 0:
@@ -181,7 +159,7 @@ def handle_image_generation(page, sel_img, prompt, name):
 
         elif 'prompt' in error:
             # breakpoint()
-            console.print(f"😒 Negative prompt: {error}",style="red")
+            print(f"Negative prompt: {error}")
             neg_prompt_file = Path(sel_img.parent, 'negative_prompts').with_suffix('.neg.txt')
             with open(neg_prompt_file, "a", encoding="utf-8") as f:
                 f.write(prompt + "\n")
@@ -195,7 +173,7 @@ def handle_image_generation(page, sel_img, prompt, name):
             # point()
 
     else:
-        print("👍 Success")
+        print("success")
         # breakpoint()
         pos_prompt_file = Path(sel_img.parent, 'positive_prompts').with_suffix('.txt')
         with open(pos_prompt_file, "a+", encoding="utf-8") as f:
@@ -204,10 +182,9 @@ def handle_image_generation(page, sel_img, prompt, name):
     return True
 
 
-
-
-
 def generate_video(page, name):
+    # breakpoint()
+    sleep(1000)
     if page.url != "https://create.wan.video/generate":
         print("reloading page to check status")
         sleep(5)
@@ -217,8 +194,7 @@ def generate_video(page, name):
         sleep(3)
         return
         
-    # breakpoint()
-    retries = 1
+    retries = 10
     while page.locator('div', has_text='ust a moment').count() > 0 and retries > 0:
         retries -= 1
         print("wait for just a moment to finish")
@@ -237,16 +213,64 @@ def generate_video(page, name):
         # if not prompt_checking:
         return
     img_dir = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan3"
-    img_dirQ = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\wan3"
-    # img_dirQ = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\queue_wan"
+    img_dirQ = r"C:\Work\OneDrive - Creative Arts Education Society\Desktop\rarely\G1\to_video\queue_wan"
     page.goto("https://create.wan.video/generate")
     sleep(5)
-    # click_close(page)
+    click_close(page)
     available_credits = int( page.locator("[data-test-id=\"header-popover-button-credit\"]").inner_text())
     sel_img, prompt = get_random_image_and_prompt(img_dir)
     if available_credits < 1:
         sel_img, prompt = get_random_image_and_prompt(img_dirQ)
-    setup_image_to_video(page=page,prompt=prompt,sel_img=sel_img,available_credits=available_credits)
+    # try:
+    page.locator('div', has_text= "image and describe").last.click() 
+    page.locator('div', has_text= "image and describe").last.type(prompt)
+    # except:
+    #     print("Could not set prompt, skipping.")
+    #     breakpoint()
+    page.locator('div[data-test-id="creation-form-box-First Frame"]').click()
+    with page.expect_file_chooser() as fc_info:
+        page.locator('div[data-test-id="creation-form-box-upload"]').click()   
+    # page.locator('input[type="file"]').set_input_files(str(sel_img))
+    file_chooser = fc_info.value
+    file_chooser.set_files(str(sel_img))
+    sleep(1)
+    try:
+        # breakpoint()
+        if available_credits >= 20:
+
+            page.locator('div[data-test-id="creation-form-button-model"]').click()
+            page.locator('div[data-test-id="creation-form-box-Wan2_5"]').click()
+            page.locator('div[data-test-id="creation-form-button-resolution"]').click()
+            page.locator('div[data-test-id="creation-form-box-1280*720"]').click()
+            page.locator('div[data-test-id="creation-form-button-duration"]').click()
+            page.locator('div[data-test-id="creation-form-box-10"]').click()
+        elif available_credits >= 10:
+
+            page.locator('div[data-test-id="creation-form-button-model"]').click()
+            page.locator('div[data-test-id="creation-form-box-Wan2_5"]').click()
+            page.locator('div[data-test-id="creation-form-button-resolution"]').click()
+            page.locator('div[data-test-id="creation-form-box-640*480"]').click()
+            page.locator('div[data-test-id="creation-form-button-duration"]').click()
+            page.locator('div[data-test-id="creation-form-box-10"]').click()
+            
+            
+            # breakpoint()
+        elif available_credits >= 5:
+
+            page.locator('div[data-test-id="creation-form-button-model"]').click()
+            page.locator('div[data-test-id="creation-form-box-Wan2_2"]').click()
+            page.locator('div[data-test-id="creation-form-button-resolution"]').click()
+            page.locator('div[data-test-id="creation-form-box-1280*720"]').click()
+            # breakpoint()
+        elif available_credits < 1:
+            # print("Not enough credits to generate video.")
+            page.locator('div[data-test-id="creation-form-button-duration"]').click()
+            page.locator('div[data-test-id="creation-form-box-10"]').click() 
+            page.locator('div[data-test-id="creation-form-button-resolution"]').click()
+            page.locator('div[data-test-id="creation-form-box-1920*1080"]').click()
+            # return
+    except:
+        pass
     if prompt_checking:
         breakpoint()
     # breakpoint()
@@ -285,54 +309,36 @@ def claim_free_credits(page):
     #     page.locator(".ant-btn-sm").count() > 0 and page.locator(".ant-btn-sm").click(timeout=1000)
     # except:
     #     print("No small button to click.")
-def store_email_actual(page1,user):
+
+def handle_route(route):
+    response = route.fetch()
+    json = response.json()
     # breakpoint()
-    page1.locator("[data-test-id=\"header-popover-button-user\"]").get_by_role("img").click()
-    page1.get_by_text("Account").click()
-    page1.get_by_text("Email:").click()
-    email = page1.get_by_text("@").text_content()
-    with open(wan_email_path, "a", encoding="utf-8") as f:
-        f.write(f"{user}:{email}\n")
-
-def store_email(page, user):
-    if Path(wan_email_path).is_file():
-        with open(wan_email_path, "r+", encoding="utf-8") as f:
-            for lines in f:
-                if user in lines:
-                    return
-    store_email_actual(page, user)
-
-def login_again_actual(page, userid,lines):
-
-    print('login again')
-    email = lines.split(':')[-1].strip()
     # breakpoint()
-    page.locator('input[placeholder="Email address"]').fill(email)
-    page.locator('input[placeholder="Password"]').fill('c6556Bhg47w5PYCv')
-    page.locator('button[type="submit"]', has_text="log in").click()
-    sleep(2)
+    all_good = [div for div in json['data'] if div['status'] == 2]
+    # assert len(all_good) > 0, "No normal status found in data."
+    normal_div = all_good[0]
+    exceptional_div = [div for div in json['data'] if div['status'] != 2][0]
+    exceptional_div['taskInput']["prompt"] = "Changed"
+    # exceptional_div["taskInput"] = normal_div['taskInput']
+    exceptional_div["status"] = normal_div['status']
+    resourceid = exceptional_div["taskId"]
+    exceptional_div["taskResult"] = normal_div['taskResult']
+    exceptional_div["taskResult"][0]['resourceId'] = resourceid
+    exceptional_div["taskResult"][0]['taskId'] = resourceid
+    exceptional_div["taskResult"][0]["ossPath"] = exceptional_div["taskResult"][0]["ossPath"].replace(normal_div['taskId'], resourceid)
+    exceptional_div["taskResult"][0]["downloadUrlWithLogo"] = exceptional_div["taskResult"][0]["downloadUrlWithLogo"].replace(normal_div['taskId'], resourceid)
 
-def login_again(browser,page, userid):
-    sleep(2)
-    # print('login again started')
-    if page.locator('*', has_text='Sign up').count() < 1:
-        return
-    # breakpoint()
-    
-    if Path(wan_email_path).is_file():
-        with open(wan_email_path, "r", encoding="utf-8") as f:
-            for lines in f:
-                if userid in lines:
+    # exceptional_div['taskResult']["prompt"] = "Changed"
 
-                    login_again_actual(page, userid,lines)
-                    return
-    browser.close()
-    # breakpoint()
-    # Path(userid).rmdir()
-    shutil.rmtree(userid)
-    assert False, f'No email found for {userid}, deleted profile dir.'
+    print(exceptional_div['taskInput']['prompt'])
+    # for key,value in normal_div.items():
+    #     if not key in exceptional_div:
+    #         print(f'adding key {key} to exceptional div')
+    #         exceptional_div[key] = value
+    # [div['status'] for div in json['data']]
 
-
+    route.fulfill(response=response, json=json)
 
 def delete_queuing(page):
     # breakpoint()
@@ -348,12 +354,8 @@ def delete_queuing(page):
     # breakpoint()
 def click_close(page):
     sleep(1)
-    # elem = page.locator('div.baxia-dialog-close')
-    for _ in range(2):
-        if  page.locator('div.baxia-dialog-close').count() > 0:
-            page.locator('div.baxia-dialog-close').click()
-            break
-        sleep(1)
+    if  page.locator('div.baxia-dialog-close').count() > 0:
+        page.locator('div.baxia-dialog-close').click()
 
 def run(playwright: Playwright) -> None:
     userid = r'ash' 
@@ -363,31 +365,21 @@ def run(playwright: Playwright) -> None:
     # if prompt_checking:
     #     headless = False
     dirs_paths = [ 
-     r"C:\dumpinGGrounds\ffcellular",
-     r"C:\dumpinGGrounds\ffptemp2",
-     r"C:\dumpinGGrounds\ffptemp3",
-     r"C:\dumpinGGrounds\ffptemp4",
-     r"C:\dumpinGGrounds\ffptemp5",
+    #  r"C:\dumpinGGrounds\ffcellular",
+    #  r"C:\dumpinGGrounds\ffptemp2",
+    #  r"C:\dumpinGGrounds\ffptemp3",
+    #  r"C:\dumpinGGrounds\ffptemp4",
+    #  r"C:\dumpinGGrounds\ffptemp5",
      r"C:\dumpinGGrounds\ffptemp6",
-     r"C:\dumpinGGrounds\ffptemp7",
-     r"C:\dumpinGGrounds\ffptemp10",
-     r"C:\dumpinGGrounds\ffptemp10",
-     r"C:\dumpinGGrounds\ffptemp11",
-     r"C:\dumpinGGrounds\ffptemp12",
-     r"C:\dumpinGGrounds\ffptemp9",
     #  r"C:\dumpinGGrounds\ffgithub",
-     r"C:\dumpinGGrounds\tempmailsffprofile",
-     r"C:\dumpinGGrounds\wanCellnewtest1",
-    #  r"C:\dumpinGGrounds\ffprofilediscord",
+    #  r"C:\dumpinGGrounds\tempmailsffprofile",
     #  r"C:\dumpinGGrounds\ffprofilediscord",
     #  r'C:\dumpinggrounds\browserprofileff',
      ]
     #     headless = False
     # dirs_paths = [ 
-    # r"C:\dumpinGGrounds\wanCellnewtest1",
     # ]
-    mdm = int(input_with_timeout("Enter MDM size (number of concurrent users): ", 10, "15"))
-
+    mdm = 15
     # profile_dirs = [profile_dir, discord_dir, github, tempmail]
     download_path = os.path.abspath("gemni_downloads")
     dp = r'C:\Personal\Developed\Hailuio\seart_downloads\mp4s'
@@ -405,7 +397,6 @@ def run(playwright: Playwright) -> None:
     all_dirs = all_dirs[mdm:]
     exclude_user = []
     exclude_user_file = Path("exclude_user.txt")
-    exclude_user_file2 = Path("rendering_not_user.txt")
     # if prompt_checking:
     spec_user = None
     #     headless = True
@@ -455,15 +446,14 @@ def run(playwright: Playwright) -> None:
             # dirs = [d for d in dirs if f'{d.parent}\\{d.name}' not in exclude_user]
             all_dirs = [d for d in all_dirs if str(d) not in exclude_user]
             dirs = [d for d in dirs if str(d) not in exclude_user]
-            console.print(f' {len(all_dirs) + len(dirs)} users remaining after exclusion.', style="yellow")
+            print(f' {len(all_dirs) + len(dirs)} users remaining after exclusion.')
             # breakpoint()
         if len(dirs) < mdm:
             temp_len = mdm-len(dirs)
             dirs.extend(all_dirs[:temp_len])
             all_dirs = all_dirs[temp_len:]
-        if len(dirs) < 10:
-            exclude_user_file.unlink()
-            continue
+        if len(dirs) < 1:
+            break
             # break
         pbar = tqdm.tqdm(dirs)
         min_wait = 10 * 60  # 7 minutes in seconds
@@ -497,35 +487,22 @@ def run(playwright: Playwright) -> None:
             # user_data_dir = Path(rf'{profile_dir}\{userid}')
             page = browser.new_page()
             page.set_default_timeout(30000)
+            page.route("**/wanx/api/common/v2/task/pagingList", handle_route)
             page.goto("https://create.wan.video/generate")
-            safe_click(page.locator('button.ant-modal-close'),wait_time=3,index=0)
+            click_close(page)
             # breakpoint()
-            safe_click(page.locator('div[class*="CloseIcon-sc"]'),wait_time=3,index=0)
-            # click_close(page)
-            # login_again(browser,page,f'{user.parent}\\{user.name}')
             if queue_update:
                 delete_queuing(page)
             if stop_at_login:
                 breakpoint()
             sleep(3)
-            # if page.locator('*', has_text='Sign up').count() >= 1:
-            login_again(browser,page, f'{user.parent}\\{user.name}')
-            store_email(page, f'{user.parent}\\{user.name}')
-            safe_click(page.locator('button',has_text="check in"))
-            # breakpoint()
-            safe_click(page.locator('button.ant-modal-close[aria-label="Close"]'),wait_time=2,index=0)
-            # if page.locator('button.ant-modal-close[aria-label="Close"]').count() > 0:
-            #     page.locator('button.ant-modal-close[aria-label="Close"]').click()
-            available_credits = int( page.locator("[data-test-id=\"header-popover-button-credit\"]").inner_text())
-            if (page.locator('button', has_text='Get Member').count() > 0 and not prompt_checking ) or available_credits < 11:
+            if page.locator('button.ant-modal-close[aria-label="Close"]').count() > 0:
+                page.locator('button.ant-modal-close[aria-label="Close"]').click()
+            if page.locator('button', has_text='Get Member').count() > 0 and not prompt_checking:
                 print(f'excluded_{user.parent}\\{user.name}')
                 exclude_user.append(f'{user.parent}\\{user.name}')
                 with exclude_user_file.open("a", encoding="utf-8") as f:
                     f.write(f'{user.parent}\\{user.name}\n')
-                if page.locator('div', has_text='just a moment').count() > 0 and False:
-                    # breakpoint()
-                    with exclude_user_file2.open("a", encoding="utf-8") as f:
-                        f.write(f'{user.parent}\\{user.name}\n')
                     # f.flush()
             # sleep(500)
             # browser.close()
@@ -536,11 +513,7 @@ def run(playwright: Playwright) -> None:
             try:
                 claim_free_credits(page)
             except Exception as e:
-                # breakpoint()
-                page.locator('button', has_text='log in with google').click()
-                # browser.close()
                 print(f'exception claiming free credits {e}')
-                # continue
             generate_video(page, userid)
             # download_files(page)
             # breakpoint()
