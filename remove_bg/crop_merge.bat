@@ -1,0 +1,1 @@
+conda activate allinone && python C:\Personal\Developed\remove_bg\main.py && python C:\Personal\Developed\remove_bg\merger.py  
